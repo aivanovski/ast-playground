@@ -1,0 +1,220 @@
+package com.github.ai.astplayground
+
+import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.assertionDsl.FieldFactory.boolean
+import com.github.ai.astplayground.assertionDsl.FieldFactory.byte
+import com.github.ai.astplayground.assertionDsl.FieldFactory.char
+import com.github.ai.astplayground.assertionDsl.FieldFactory.double
+import com.github.ai.astplayground.assertionDsl.FieldFactory.float
+import com.github.ai.astplayground.assertionDsl.FieldFactory.int
+import com.github.ai.astplayground.assertionDsl.FieldFactory.long
+import com.github.ai.astplayground.assertionDsl.FieldFactory.short
+import com.github.ai.astplayground.assertionDsl.FieldFactory.string
+import com.github.ai.astplayground.assertionDsl.FieldFactory.variable
+import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.type
+import org.junit.jupiter.api.Test
+
+class FieldDeclarationTest {
+
+    @Test
+    fun `should support primitive declarations without values`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    boolean bl0;
+                    byte b0;
+                    char c0;
+                    short s0;
+                    int i0;
+                    long l0;
+                    float f0;
+                    double d0;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(boolean("bl0"))
+                    field(byte("b0"))
+                    field(char("c0"))
+                    field(short("s0"))
+                    field(int("i0"))
+                    field(long("l0"))
+                    field(float("f0"))
+                    field(double("d0"))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support boolean declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    boolean b0 = true;
+                    boolean b1 = false;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(boolean("b0", true))
+                    field(boolean("b1", false))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support byte declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    byte b0 = 1;
+                    byte b1 = 0x02;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(byte("b0", 1))
+                    field(byte("b1", 2))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support char declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    char c0 = 1;
+                    char c1 = 'a';
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(char("c0", 1.toChar()))
+                    field(char("c1", 'a'))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support int declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    int i0 = 1;
+                    int i1 = 0x02;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(int("i0", 1))
+                    field(int("i1", 2))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support long declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    long l0 = 1L;
+                    long l1 = 2l;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(long("l0", 1L))
+                    field(long("l1", 2L))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support float declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    float f0 = 1;
+                    float f1 = 2f;
+                    float f2 = 3F;
+                    float f3 = 0.4F;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(float("f0", 1.0f))
+                    field(float("f1", 2.0f))
+                    field(float("f2", 3.0f))
+                    field(float("f3", 0.4f))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support double declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    double d0 = 1;
+                    double d1 = 2d;
+                    double d2 = 3D;
+                    double d3 = 0.4;
+                    double d4 = 0.5d;
+                    double d5 = 0.6D;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(double("d0", 1.0))
+                    field(double("d1", 2.0))
+                    field(double("d2", 3.0))
+                    field(double("d3", 0.4))
+                    field(double("d4", 0.5))
+                    field(double("d5", 0.6))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support typed declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    Object o0;
+                    String s0;
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(variable(name = "o0", type("Object")))
+                    field(variable(name = "s0", type("String")))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support string declarations`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    String s0 = "abc";
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(string("s0", "abc"))
+                }
+            }
+        )
+    }
+}

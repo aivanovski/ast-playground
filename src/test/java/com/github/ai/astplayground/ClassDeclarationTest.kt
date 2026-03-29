@@ -3,16 +3,17 @@ package com.github.ai.astplayground
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
 import org.junit.jupiter.api.Test
 
-class ImportTest {
+class ClassDeclarationTest {
 
     @Test
-    fun `should support import declaration`() {
+    fun `should support class declaration`() {
         parseAndAssert(
             input = """
-                import java.util.List;
+                class Test {
+                }
             """,
             expected = buildAst {
-                import("java.util.List")
+                `class`("Test")
             }
         )
     }

@@ -1,23 +1,29 @@
 package com.github.ai.astplayground
 
+import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
 import org.junit.jupiter.api.Test
 
 class PackageTest {
 
     @Test
-    fun `should convert package declaration`() {
-        val input = """
-            package com.example.test;
-            class Test {
+    fun `should support package declaration`() {
+        parseAndAssert(
+            input = """
+                package com.example.test;
+            """,
+            expected = buildAst {
+                `package`("com.example.test")
             }
-        """
+        )
+    }
 
-        val output = """
-            package com.example.test
-            class Test {
+    @Test
+    fun `should support default package`() {
+        parseAndAssert(
+            input = "",
+            expected = buildAst {
+
             }
-        """
-
-        transpileAndAssert(input, output)
+        )
     }
 }

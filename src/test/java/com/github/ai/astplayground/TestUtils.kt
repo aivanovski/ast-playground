@@ -1,45 +1,13 @@
 package com.github.ai.astplayground
 
-import com.github.ai.astplayground.transpiler.DeepJavaToKotlinTranspiler
-import com.github.ai.astplayground.transpiler.SourceTranspiler
+import com.github.ai.astplayground.transpiler.AstParser
+import com.github.ai.astplayground.transpiler.model.JavaAstNode
 import io.kotest.matchers.shouldBe
 
-fun transpileAndAssert(
+fun parseAndAssert(
     input: String,
-    output: String,
-    isTrimIndents: Boolean = true,
-    isFilterEmptyLines: Boolean = true,
-    transpiler: SourceTranspiler = DeepJavaToKotlinTranspiler()
+    expected: List<JavaAstNode>
 ) {
-    val processedInput = process(input, isTrimIndents, isFilterEmptyLines)
-    val processedOutput = process(output, isTrimIndents, isFilterEmptyLines)
-
-    val result = transpiler.transpile(processedInput)
-
-    println("INPUT:")
-    println(processedInput)
-
-    println("RESULT:")
-    println(result)
-
-    println("EXPECTED:")
-    println(processedOutput)
-
-    result.trim() shouldBe processedOutput
-}
-
-private fun process(
-    input: String,
-    isTrimIndents: Boolean = true,
-    isFilterEmptyLines: Boolean = true,
-): String {
-    val trimmed = if (isTrimIndents) input.trimIndent() else input
-
-    return if (isFilterEmptyLines) {
-        trimmed.lines()
-            .filter { line -> line.isNotBlank() }
-            .joinToString(separator = "\n")
-    } else {
-        trimmed
-    }
+    val ast = AstParser().parseToAst(input)
+    ast shouldBe expected
 }
