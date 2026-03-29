@@ -80,9 +80,20 @@ sealed interface Expression {
         val expression: Expression
     ) : Expression
 
-    // Identifier
+    // Identifiers
     data class Identifier(
         val name: String
+    ) : Expression
+
+    data class TypedIdentifier(
+        val identifier: TypeReference,
+        val types: List<TypeReference>
+    ) : Expression
+
+    // Constructor
+    data class ConstructorInvocation(
+        val identifier: Expression,
+        val arguments: List<Expression>,
     ) : Expression
 }
 

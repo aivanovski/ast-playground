@@ -30,6 +30,7 @@ import com.sun.source.tree.LiteralTree
 import com.sun.source.tree.MemberSelectTree
 import com.sun.source.tree.MethodInvocationTree
 import com.sun.source.tree.MethodTree
+import com.sun.source.tree.NewClassTree
 import com.sun.source.tree.ParameterizedTypeTree
 import com.sun.source.tree.PrimitiveTypeTree
 import com.sun.source.tree.StatementTree
@@ -179,17 +180,14 @@ class AstParser {
     private fun VariableTree.toField(): Field {
         // TODO: implement initializer from: initializer?.toString(),
         val type = type.toTypeReference()
-        val initializer = initializer
+        val initExpression = initializer
 
-        val body = when {
-            initializer == null -> InitializerBlock.Empty
-            initializer is LiteralTree -> {
-                InitializerBlock.ExpressionBlock(
-                    expression = convertLiteral(initializer, type)
-                )
-            }
-
-            else -> throw InvalidAstTreeNodeException("Invalid field initializer", initializer)
+        val body = if (initExpression == null) {
+            InitializerBlock.Empty
+        } else {
+            InitializerBlock.ExpressionBlock(
+                expression = convertExpression(initExpression)
+            )
         }
 
         return Field(
@@ -326,6 +324,18 @@ class AstParser {
 
             is IdentifierTree -> Expression.Identifier(
                 name = expression.toString()
+            )
+
+            is NewClassTree -> {
+                Expression.ConstructorInvocation(
+                    identifier = convertExpression(expression.identifier),
+                    arguments = convertExpressions(expression.arguments)
+                )
+            }
+
+            is ParameterizedTypeTree -> Expression.TypedIdentifier(
+                identifier = expression.type.toTypeReference(),
+                types = expression.typeArguments.map { it.toTypeReference() }
             )
 
             else -> throw InvalidAstTreeNodeException("Invalid expression", expression)

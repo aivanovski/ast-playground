@@ -207,17 +207,28 @@ class MethodInvocationBuilder(
 }
 
 object ExpressionFactory {
+    fun constructor(
+        identifier: Expression
+    ) = Expression.ConstructorInvocation(
+        identifier = identifier,
+        arguments = listOf()
+    )
+
     fun string(value: String) = Expression.StringLiteral(value)
     fun int(value: Int) = Expression.IntLiteral(value)
 }
 
 object FieldFactory {
 
-    fun variable(name: String, type: TypeReference) = Field(
+    fun variable(
+        name: String,
+        type: TypeReference,
+        initializer: InitializerBlock = InitializerBlock.Empty
+    ) = Field(
         name = name,
         modifiers = emptySet(),
         type = type,
-        initializer = InitializerBlock.Empty
+        initializer = initializer
     )
 
     fun string(
@@ -483,12 +494,14 @@ object NonPrimitiveTypes {
 
 object TypeReferenceFactory {
 
-    fun type(name: String) =
-        TypeReference(
-            name = name,
-            kind = TypeReferenceKind.DECLARED,
-            typeArguments = emptyList()
-        )
+    fun type(
+        name: String,
+        vararg typeArguments: TypeReference
+    ) = TypeReference(
+        name = name,
+        kind = TypeReferenceKind.DECLARED,
+        typeArguments = typeArguments.toList()
+    )
 
     fun void() = NonPrimitiveTypes.VOID
     fun boolean() = PrimitiveTypes.BOOLEAN

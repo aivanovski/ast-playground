@@ -1,6 +1,7 @@
 package com.github.ai.astplayground
 
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.assertionDsl.ExpressionFactory
 import com.github.ai.astplayground.assertionDsl.FieldFactory.boolean
 import com.github.ai.astplayground.assertionDsl.FieldFactory.byte
 import com.github.ai.astplayground.assertionDsl.FieldFactory.char
@@ -12,6 +13,7 @@ import com.github.ai.astplayground.assertionDsl.FieldFactory.short
 import com.github.ai.astplayground.assertionDsl.FieldFactory.string
 import com.github.ai.astplayground.assertionDsl.FieldFactory.variable
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.type
+import com.github.ai.astplayground.transpiler.model.Expression
 import org.junit.jupiter.api.Test
 
 class FieldDeclarationTest {
@@ -213,6 +215,27 @@ class FieldDeclarationTest {
             expected = buildAst {
                 `class`("Test") {
                     field(string("s0", "abc"))
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support parameterized types`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    List<String> values = new ArrayList<String>();
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(
+                        variable(
+                            "values",
+                            type("List", type("String"))
+                        )
+                    )
                 }
             }
         )
