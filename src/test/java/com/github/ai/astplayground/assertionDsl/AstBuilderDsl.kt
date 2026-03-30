@@ -134,6 +134,14 @@ class CodeBlockBuilder(
     val expressions: MutableList<Expression> = mutableListOf()
 ) {
 
+    fun variable(name: String, type: TypeReference, initializer: InitializerBlock) {
+        expressions.add(Expression.DeclareVariable(name, type, initializer))
+    }
+
+    fun `return`(expression: Expression) {
+        expressions.add(Expression.Return(expression))
+    }
+
     fun identifier(name: String): MethodInvocationBuilder {
         return MethodInvocationBuilder(
             blockBuilder = this,
@@ -185,6 +193,10 @@ class MethodInvocationBuilder(
 }
 
 object ExpressionFactory {
+
+    fun plus(lhs: Expression, rhs: Expression) {
+
+    }
 
     fun typedIdentifier(
         name: String,
@@ -316,6 +328,16 @@ object FieldFactory {
 }
 
 object InitializerFactory {
+
+    fun constructor(
+        identifier: Expression,
+        arguments: List<Expression> = emptyList()
+    ) = InitializerBlock.ExpressionBlock(
+        expression = Expression.ConstructorInvocation(
+            identifier = identifier,
+            arguments = arguments
+        )
+    )
 
     fun expression(expression: Expression) = InitializerBlock.ExpressionBlock(
         expression = expression
@@ -505,6 +527,7 @@ object TypeReferenceFactory {
         typeArguments = typeArguments.toList()
     )
 
+    fun string() = NonPrimitiveTypes.STRING
     fun void() = NonPrimitiveTypes.VOID
     fun boolean() = PrimitiveTypes.BOOLEAN
     fun byte() = PrimitiveTypes.BYTE

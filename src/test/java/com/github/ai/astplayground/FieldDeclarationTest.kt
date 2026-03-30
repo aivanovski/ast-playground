@@ -12,9 +12,10 @@ import com.github.ai.astplayground.assertionDsl.FieldFactory.int
 import com.github.ai.astplayground.assertionDsl.FieldFactory.long
 import com.github.ai.astplayground.assertionDsl.FieldFactory.string
 import com.github.ai.astplayground.assertionDsl.FieldFactory.variable
-import com.github.ai.astplayground.assertionDsl.InitializerFactory.expression
+import com.github.ai.astplayground.assertionDsl.InitializerFactory
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.parameterizedType
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.type
+import com.github.ai.astplayground.transpiler.model.Expression
 import org.junit.jupiter.api.Test
 
 class FieldDeclarationTest {
@@ -219,8 +220,33 @@ class FieldDeclarationTest {
                         variable(
                             "values",
                             parameterizedType("List", parameterizedWith = "String"),
-                            initializer = expression(
-                                ExpressionFactory.constructor(typedIdentifier("ArrayList", "String"))
+                            initializer = InitializerFactory.constructor(
+                                typedIdentifier("ArrayList", "String")
+                            )
+                        )
+                    )
+                }
+            }
+        )
+    }
+
+    @Test
+    fun `should support constructor invocation`() {
+        parseAndAssert(
+            input = """
+                class Test {
+                    String s0 = new String("abc");
+                }
+            """,
+            expected = buildAst {
+                `class`("Test") {
+                    field(
+                        variable(
+                            "s0",
+                            type("String"),
+                            initializer = InitializerFactory.constructor(
+                                Expression.Identifier("String"),
+                                listOf(ExpressionFactory.string("abc"))
                             )
                         )
                     )

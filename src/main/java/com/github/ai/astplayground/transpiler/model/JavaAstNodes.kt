@@ -57,6 +57,11 @@ sealed interface InitializerBlock {
 sealed interface Expression {
     data object Empty : Expression
 
+    // Return
+    data class Return(
+        val expression: Expression
+    ) : Expression
+
     // Literals
     sealed interface Literal : Expression
     data class BooleanLiteral(val value: Boolean) : Literal
@@ -67,6 +72,17 @@ sealed interface Expression {
     data class FloatLiteral(val value: Float) : Literal
     data class DoubleLiteral(val value: Double) : Literal
     data class StringLiteral(val string: String) : Literal
+
+    // Expressions
+    data class Expressions(
+        val expressions: List<Expression>
+    ) : Expression
+
+    data class BinaryExpression(
+        val operator: Operator,
+        val lhs: Expression,
+        val rhs: Expression
+    ) : Expression
 
     // Methods
     data class MethodInvocation(
@@ -94,6 +110,13 @@ sealed interface Expression {
     data class ConstructorInvocation(
         val identifier: Expression,
         val arguments: List<Expression>,
+    ) : Expression
+
+    // Variables
+    data class DeclareVariable(
+        val name: String,
+        val type: TypeReference,
+        val initializer: InitializerBlock
     ) : Expression
 }
 
@@ -128,12 +151,12 @@ enum class TypeReferenceKind {
     VOID,
 }
 
-enum class TypeKind {
-    CLASS,
-    INTERFACE,
-    ENUM,
-    ANNOTATION,
-}
+//enum class TypeKind {
+//    CLASS,
+//    INTERFACE,
+//    ENUM,
+//    ANNOTATION,
+//}
 
 enum class Modifier {
     PUBLIC,
@@ -142,4 +165,11 @@ enum class Modifier {
     STATIC,
     FINAL,
     ABSTRACT,
+}
+
+enum class Operator {
+    PLUS,
+    MINUS,
+    MULTIPLY,
+    DIVIDE
 }

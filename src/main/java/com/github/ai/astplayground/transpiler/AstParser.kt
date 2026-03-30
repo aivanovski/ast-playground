@@ -8,6 +8,7 @@ import com.github.ai.astplayground.transpiler.model.InitializerBlock
 import com.github.ai.astplayground.transpiler.model.JavaAstNode
 import com.github.ai.astplayground.transpiler.model.Method
 import com.github.ai.astplayground.transpiler.model.Modifier
+import com.github.ai.astplayground.transpiler.model.Operator
 import com.github.ai.astplayground.transpiler.model.Parameter
 import com.github.ai.astplayground.transpiler.model.TypeReference
 import com.github.ai.astplayground.transpiler.model.TypeReferenceKind
@@ -19,6 +20,7 @@ import com.github.ai.astplayground.transpiler.model.isPrimitiveFloat
 import com.github.ai.astplayground.transpiler.model.isPrimitiveInt
 import com.github.ai.astplayground.transpiler.model.isPrimitiveLong
 import com.sun.source.tree.AnnotatedTypeTree
+import com.sun.source.tree.BinaryTree
 import com.sun.source.tree.BlockTree
 import com.sun.source.tree.ClassTree
 import com.sun.source.tree.CompilationUnitTree
@@ -33,6 +35,7 @@ import com.sun.source.tree.MethodTree
 import com.sun.source.tree.NewClassTree
 import com.sun.source.tree.ParameterizedTypeTree
 import com.sun.source.tree.PrimitiveTypeTree
+import com.sun.source.tree.ReturnTree
 import com.sun.source.tree.StatementTree
 import com.sun.source.tree.Tree
 import com.sun.source.tree.VariableTree
@@ -180,15 +183,7 @@ class AstParser {
     private fun VariableTree.toField(): Field {
         // TODO: implement initializer from: initializer?.toString(),
         val type = type.toTypeReference()
-        val initExpression = initializer
-
-        val body = if (initExpression == null) {
-            InitializerBlock.Empty
-        } else {
-            InitializerBlock.ExpressionBlock(
-                expression = convertExpression(initExpression, forType = type)
-            )
-        }
+        val body = initializer.toInitializerBlock(forType = type)
 
         return Field(
             name = name.toString(),
@@ -280,7 +275,7 @@ class AstParser {
 
     private fun BlockTree.toCodeBlock(): CodeBlock {
         val expressions = statements
-            .map { statement -> statement.toExpression() }
+            .map { statement -> convertStatementToExpression(statement) }
 
         return if (expressions.isEmpty()) {
             CodeBlock.Empty
@@ -291,10 +286,26 @@ class AstParser {
         }
     }
 
-    private fun StatementTree.toExpression(): Expression {
-        return when (this) {
-            is ExpressionStatementTree -> convertExpression(expression)
-            else -> throw InvalidAstTreeNodeException("Invalid statement", this)
+    private fun convertStatementToExpression(
+        statement: StatementTree
+    ): Expression {
+        return when (statement) {
+            is ExpressionStatementTree -> convertExpression(statement.expression)
+            is VariableTree -> {
+                Expression.DeclareVariable(
+                    name = statement.name.toString(),
+                    type = statement.type.toTypeReference(),
+                    initializer = statement.initializer.toInitializerBlock(forType = null)
+                )
+            }
+
+            is ReturnTree -> {
+                Expression.Return(
+                    expression = convertExpression(statement.expression)
+                )
+            }
+
+            else -> throw InvalidAstTreeNodeException("Invalid statement", statement)
         }
     }
 
@@ -341,8 +352,31 @@ class AstParser {
                 types = expression.typeArguments.map { it.toTypeReference() }
             )
 
+            is BinaryTree -> {
+                Expression.BinaryExpression(
+                    operator = expression.kind.name.toOperator(),
+                    lhs = convertExpression(expression.leftOperand),
+                    rhs = convertExpression(expression.rightOperand)
+                )
+            }
+
             else -> throw InvalidAstTreeNodeException("Invalid expression", expression)
         }
+    }
+
+    private fun ExpressionTree?.toInitializerBlock(
+        forType: TypeReference?
+    ): InitializerBlock {
+        val expression = this
+
+        return if (expression != null) {
+            InitializerBlock.ExpressionBlock(
+                expression = convertExpression(expression = expression, forType = forType)
+            )
+        } else {
+            InitializerBlock.Empty
+        }
+
     }
 
     private fun Set<JDKModifier>.toModifiers(): Set<Modifier> {
@@ -357,6 +391,17 @@ class AstParser {
                 else -> throw InvalidAstTreeNodeException("Invalid modifier", modifier)
             }
         }.toSet()
+    }
+
+    private fun String.toOperator(): Operator {
+        return when (this) {
+            // TODO: add other operators
+            "PLUS" -> Operator.PLUS
+            "MINUS" -> Operator.MINUS
+            "MUL" -> Operator.MULTIPLY
+            "DIV" -> Operator.DIVIDE
+            else -> throw InvalidAstTreeNodeException("Invalid operator", this)
+        }
     }
 
     private class StringJavaFileObject(
