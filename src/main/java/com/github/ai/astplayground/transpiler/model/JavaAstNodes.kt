@@ -62,6 +62,13 @@ sealed interface Expression {
         val expression: Expression
     ) : Expression
 
+    // Conditions
+    data class If(
+        val condition: Expression,
+        val thenExpression: Expression,
+        val elseExpression: Expression
+    ) : Expression
+
     // Literals
     sealed interface Literal : Expression
     data class BooleanLiteral(val value: Boolean) : Literal

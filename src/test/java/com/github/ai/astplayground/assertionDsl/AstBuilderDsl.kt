@@ -142,6 +142,24 @@ class CodeBlockBuilder(
         expressions.add(Expression.Return(expression))
     }
 
+    fun `if`(
+        condition: Expression,
+        block: CodeBlockBuilder.() -> Unit = {}
+    ) {
+        val innerBlockBuilder = CodeBlockBuilder()
+            .apply {
+                block.invoke(this)
+            }
+
+        expressions.add(
+            Expression.If(
+                condition = condition,
+                thenExpression = Expression.Expressions(innerBlockBuilder.expressions),
+                elseExpression = Expression.Empty
+            )
+        )
+    }
+
     fun identifier(name: String): MethodInvocationBuilder {
         return MethodInvocationBuilder(
             blockBuilder = this,
@@ -193,10 +211,6 @@ class MethodInvocationBuilder(
 }
 
 object ExpressionFactory {
-
-    fun plus(lhs: Expression, rhs: Expression) {
-
-    }
 
     fun typedIdentifier(
         name: String,

@@ -27,6 +27,7 @@ import com.sun.source.tree.CompilationUnitTree
 import com.sun.source.tree.ExpressionStatementTree
 import com.sun.source.tree.ExpressionTree
 import com.sun.source.tree.IdentifierTree
+import com.sun.source.tree.IfTree
 import com.sun.source.tree.ImportTree
 import com.sun.source.tree.LiteralTree
 import com.sun.source.tree.MemberSelectTree
@@ -34,6 +35,7 @@ import com.sun.source.tree.MethodInvocationTree
 import com.sun.source.tree.MethodTree
 import com.sun.source.tree.NewClassTree
 import com.sun.source.tree.ParameterizedTypeTree
+import com.sun.source.tree.ParenthesizedTree
 import com.sun.source.tree.PrimitiveTypeTree
 import com.sun.source.tree.ReturnTree
 import com.sun.source.tree.StatementTree
@@ -48,6 +50,7 @@ import javax.tools.DiagnosticCollector
 import javax.tools.JavaFileObject
 import javax.tools.SimpleJavaFileObject
 import javax.tools.ToolProvider
+import kotlin.math.max
 
 class AstParser {
 
@@ -275,7 +278,7 @@ class AstParser {
 
     private fun BlockTree.toCodeBlock(): CodeBlock {
         val expressions = statements
-            .map { statement -> convertStatementToExpression(statement) }
+            .map { statement -> convertStatement(statement) }
 
         return if (expressions.isEmpty()) {
             CodeBlock.Empty
@@ -286,7 +289,13 @@ class AstParser {
         }
     }
 
-    private fun convertStatementToExpression(
+    private fun convertStatements(
+        statements: List<StatementTree>
+    ): List<Expression> {
+        return statements.map { statement -> convertStatement(statement) }
+    }
+
+    private fun convertStatement(
         statement: StatementTree
     ): Expression {
         return when (statement) {
@@ -302,6 +311,24 @@ class AstParser {
             is ReturnTree -> {
                 Expression.Return(
                     expression = convertExpression(statement.expression)
+                )
+            }
+
+            is IfTree -> {
+                Expression.If(
+                    condition = convertExpression(statement.condition),
+                    thenExpression = statement.thenStatement
+                        ?.let { convertStatement(it) }
+                        ?: Expression.Empty,
+                    elseExpression = statement.elseStatement
+                        ?.let { convertStatement(it) }
+                        ?: Expression.Empty
+                )
+            }
+
+            is BlockTree -> {
+                Expression.Expressions(
+                    expressions = convertStatements(statement.statements)
                 )
             }
 
@@ -358,6 +385,10 @@ class AstParser {
                     lhs = convertExpression(expression.leftOperand),
                     rhs = convertExpression(expression.rightOperand)
                 )
+            }
+
+            is ParenthesizedTree -> {
+                convertExpression(expression.expression)
             }
 
             else -> throw InvalidAstTreeNodeException("Invalid expression", expression)
