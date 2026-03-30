@@ -1,0 +1,27 @@
+[versions]
+appVersion = "0.1.0"
+
+# Build tooling
+kotlin = "2.1.20"
+shadowJar = "8.3.6"
+
+# Testing
+kotest = "6.1.5"
+junit = "5.5.2"
+mockk = "1.14.9"
+
+# Core dependencies
+koin = "4.1.1"
+javaparser = "3.26.2"
+
+[plugins]
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+shadowJar = { id = "com.gradleup.shadow", version.ref = "shadowJar" }
+
+[libraries]
+kotest-assertions = { module = "io.kotest:kotest-assertions-core-jvm", version.ref = "kotest" }
+kotest-runner = { module = "io.kotest:kotest-runner-junit5-jvm", version.ref = "kotest" }
+junit = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+koin = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+javaparserSymbolSolver = { module = "com.github.javaparser:javaparser-symbol-solver-core", version.ref = "javaparser" }
