@@ -4,6 +4,12 @@ import com.github.ai.astplayground.transpiler.model.Expression
 
 object IdentifierFactory {
 
+    fun String.asIdentifier(): Expression.Identifier {
+        return Expression.Identifier(
+            name = this
+        )
+    }
+
     infix fun String.field(
         fieldName: String
     ): Expression.FieldAccess {
@@ -13,6 +19,15 @@ object IdentifierFactory {
         return Expression.FieldAccess(
             name = fieldName,
             expression = identifier
+        )
+    }
+
+    infix fun String.invokeConstructor(
+        arguments: List<Expression>
+    ): Expression.ConstructorInvocation {
+        return Expression.ConstructorInvocation(
+            identifier = Expression.Identifier(this),
+            arguments = arguments
         )
     }
 
@@ -34,17 +49,6 @@ object IdentifierFactory {
         return Expression.FieldAccess(
             name = methodName,
             expression = this
-        )
-    }
-}
-
-object ExprFactory {
-    infix fun Expression.FieldAccess.invoke(
-        argument: Expression
-    ): Expression.MethodInvocation {
-        return Expression.MethodInvocation(
-            arguments = listOf(argument),
-            method = this
         )
     }
 }

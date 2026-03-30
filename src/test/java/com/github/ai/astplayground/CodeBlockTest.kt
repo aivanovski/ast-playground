@@ -1,15 +1,16 @@
 package com.github.ai.astplayground
 
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
-import com.github.ai.astplayground.assertionDsl.ExprFactory.invoke
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory
+import com.github.ai.astplayground.assertionDsl.ExpressionFactory.invoke
+import com.github.ai.astplayground.assertionDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory.string
+import com.github.ai.astplayground.assertionDsl.IdentifierFactory.asIdentifier
 import com.github.ai.astplayground.assertionDsl.IdentifierFactory.field
 import com.github.ai.astplayground.assertionDsl.IdentifierFactory.method
-import com.github.ai.astplayground.assertionDsl.InitializerFactory
-import com.github.ai.astplayground.assertionDsl.InitializerFactory.stringValue
+import com.github.ai.astplayground.assertionDsl.InitializerFactory.iliteral
 import com.github.ai.astplayground.assertionDsl.ParametersFactory
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory
+import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.asType
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.void
 import com.github.ai.astplayground.transpiler.model.Expression
 import com.github.ai.astplayground.transpiler.model.InitializerBlock
@@ -73,13 +74,13 @@ class CodeBlockTest {
             expected = buildAst {
                 `class`("Test") {
                     method("m0", returns = TypeReferenceFactory.string()) {
-                        variable("s0", TypeReferenceFactory.string(), stringValue("abc"))
-                        variable("s1", TypeReferenceFactory.string(), stringValue("123"))
+                        variable("s0", "String".asType(), "abc".iliteral())
+                        variable("s1", "String".asType(), "123".iliteral())
                         `return`(
                             Expression.BinaryExpression(
                                 Operator.PLUS,
-                                Expression.Identifier("s0"),
-                                Expression.Identifier("s1")
+                                "s0".asIdentifier(),
+                                "s1".asIdentifier()
                             )
                         )
                     }
@@ -112,8 +113,8 @@ class CodeBlockTest {
                         `return`(
                             Expression.BinaryExpression(
                                 Operator.PLUS,
-                                Expression.Identifier("a"),
-                                Expression.Identifier("b")
+                                "a".asIdentifier(),
+                                "b".asIdentifier()
                             )
                         )
                     }
@@ -124,11 +125,8 @@ class CodeBlockTest {
                             TypeReferenceFactory.int(),
                             InitializerBlock.ExpressionBlock(
                                 Expression.MethodInvocation(
-                                    arguments = listOf(
-                                        Expression.IntLiteral(1),
-                                        Expression.IntLiteral(2)
-                                    ),
-                                    method = Expression.Identifier("sum")
+                                    arguments = listOf(1.literal(), 2.literal()),
+                                    method = "sum".asIdentifier()
                                 )
                             )
                         )

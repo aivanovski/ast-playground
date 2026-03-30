@@ -1,5 +1,6 @@
 package com.github.ai.astplayground.assertionDsl
 
+import com.github.ai.astplayground.assertionDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.transpiler.model.CodeBlock
 import com.github.ai.astplayground.transpiler.model.Constructor
 import com.github.ai.astplayground.transpiler.model.Expression
@@ -12,6 +13,7 @@ import com.github.ai.astplayground.transpiler.model.Modifier
 import com.github.ai.astplayground.transpiler.model.Parameter
 import com.github.ai.astplayground.transpiler.model.TypeReference
 import com.github.ai.astplayground.transpiler.model.TypeReferenceKind
+import com.github.ai.astplayground.transpiler.model.Variable
 
 internal object AstBuilderDsl {
     fun buildAst(content: AstBuilder.() -> Unit): List<JavaAstNode> {
@@ -89,6 +91,19 @@ class TypeBuilder(
         )
     }
 
+    fun void_method(
+        name: String,
+        vararg parameters: Parameter,
+        modifiers: Set<Modifier> = emptySet(),
+        body: CodeBlockBuilder.() -> Unit = {}
+    ) = method(
+        name = name,
+        parameters = parameters,
+        returns = TypeReferenceFactory.void(),
+        modifiers = modifiers,
+        body = body
+    )
+
     fun method(
         name: String,
         vararg parameters: Parameter,
@@ -150,6 +165,28 @@ class CodeBlockBuilder(
     val expressions: MutableList<Expression> = mutableListOf()
 ) {
 
+    fun foreach(
+        variable: Variable,
+        iterable: Expression,
+        block: CodeBlockBuilder.() -> Unit = {}
+    ) {
+        expressions.add(
+            Expression.ForEachLoop(
+                variable = Expression.DeclareVariable(
+                    name = variable.name,
+                    type = variable.type,
+                    initializer = variable.initializer
+                ),
+                iterable = iterable,
+                body = CodeBlockBuilder()
+                    .apply {
+                        block.invoke(this)
+                    }
+                    .buildExpression()
+            )
+        )
+    }
+
     fun variable(name: String, type: TypeReference, initializer: InitializerBlock) {
         expressions.add(
             Expression.DeclareVariable(
@@ -197,15 +234,14 @@ class CodeBlockBuilder(
         condition: Expression,
         block: CodeBlockBuilder.() -> Unit = {}
     ) {
-        val innerBlockBuilder = CodeBlockBuilder()
-            .apply {
-                block.invoke(this)
-            }
-
         expressions.add(
             Expression.If(
                 condition = condition,
-                thenExpression = Expression.Expressions(innerBlockBuilder.expressions),
+                thenExpression = CodeBlockBuilder()
+                    .apply {
+                        block.invoke(this)
+                    }
+                    .buildExpression(),
                 elseExpression = Expression.Empty
             )
         )
@@ -222,6 +258,14 @@ class CodeBlockBuilder(
             )
         } else {
             CodeBlock.Empty
+        }
+    }
+
+    fun buildExpression(): Expression {
+        return when {
+            expressions.size > 1 -> Expression.Expressions(expressions)
+            expressions.size == 1 -> expressions.first()
+            else -> Expression.Empty
         }
     }
 }
@@ -256,54 +300,6 @@ class MethodInvocationBuilder(
             )
         )
     }
-}
-
-
-object ExpressionFactory {
-
-    fun identifier(vararg path: String): Expression {
-        val identifier = Expression.Identifier(path.first())
-
-        // System.out.println => println -> out -> System
-        val fields = mutableListOf<Expression.FieldAccess>()
-
-        var previousField: Expression = identifier
-
-        for (fieldName in path.drop(1)) {
-            val field = Expression.FieldAccess(
-                name = fieldName,
-                expression = previousField
-            )
-
-            fields.add(field)
-            previousField = field
-        }
-
-        return if (fields.isNotEmpty()) {
-            fields.last()
-        } else {
-            identifier
-        }
-    }
-
-    fun typedIdentifier(
-        name: String,
-        parameterType: String
-    ) = Expression.TypedIdentifier(
-        identifier = TypeReferenceFactory.type(name),
-        types = listOf(TypeReferenceFactory.type(parameterType))
-    )
-
-    fun constructor(
-        identifier: Expression,
-        arguments: List<Expression> = emptyList()
-    ) = Expression.ConstructorInvocation(
-        identifier = identifier,
-        arguments = arguments
-    )
-
-    fun string(value: String) = Expression.StringLiteral(value)
-    fun int(value: Int) = Expression.IntLiteral(value)
 }
 
 object FieldFactory {
@@ -417,6 +413,18 @@ object FieldFactory {
 
 object InitializerFactory {
 
+    fun String.iliteral() = InitializerBlock.ExpressionBlock(
+        expression = this.literal()
+    )
+
+    fun Int.iliteral() = InitializerBlock.ExpressionBlock(
+        expression = this.literal()
+    )
+
+    fun initializer(producer: () -> Expression) = InitializerBlock.ExpressionBlock(
+        expression = producer.invoke()
+    )
+
     fun constructor(
         identifier: Expression,
         arguments: List<Expression> = emptyList()
@@ -465,6 +473,12 @@ object InitializerFactory {
 }
 
 object ParametersFactory {
+
+    fun string(name: String) = Parameter(
+        name = name,
+        type = NonPrimitiveTypes.STRING,
+        isVarArgs = false
+    )
 
     fun variable(name: String, type: TypeReference) =
         Parameter(
@@ -595,36 +609,27 @@ object NonPrimitiveTypes {
     )
 }
 
-object TypeReferenceFactory {
+object VariableFactory {
 
-    fun parameterizedType(
-        name: String,
-        parameterizedWith: String
-    ) = TypeReference(
-        name = name,
-        kind = TypeReferenceKind.DECLARED,
-        typeArguments = listOf(type(parameterizedWith))
+    fun String.asVariableOf(typeName: String) = Variable(
+        name = this,
+        type = TypeReference(
+            name = typeName,
+            kind = TypeReferenceKind.DECLARED
+        ),
+        initializer = InitializerBlock.Empty
     )
 
-    fun type(
-        name: String,
-        vararg typeArguments: TypeReference
-    ) = TypeReference(
-        name = name,
-        kind = TypeReferenceKind.DECLARED,
-        typeArguments = typeArguments.toList()
-    )
+    fun String.asIntVariable() = intVariable(name = this)
 
-    fun string() = NonPrimitiveTypes.STRING
-    fun void() = NonPrimitiveTypes.VOID
-    fun boolean() = PrimitiveTypes.BOOLEAN
-    fun byte() = PrimitiveTypes.BYTE
-    fun char() = PrimitiveTypes.CHAR
-    fun short() = PrimitiveTypes.SHORT
-    fun int() = PrimitiveTypes.INT
-    fun long() = PrimitiveTypes.LONG
-    fun float() = PrimitiveTypes.FLOAT
-    fun double() = PrimitiveTypes.DOUBLE
+    fun intVariable(
+        name: String,
+        initializer: InitializerBlock = InitializerBlock.Empty
+    ) = Variable(
+        name = name,
+        type = PrimitiveTypes.INT,
+        initializer = initializer
+    )
 }
 
 object Modifiers {

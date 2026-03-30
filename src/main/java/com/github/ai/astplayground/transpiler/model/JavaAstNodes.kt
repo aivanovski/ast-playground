@@ -47,6 +47,12 @@ data class Field(
     val initializer: InitializerBlock,
 )
 
+data class Variable(
+    val name: String,
+    val type: TypeReference,
+    val initializer: InitializerBlock,
+)
+
 sealed interface InitializerBlock {
     data object Empty : InitializerBlock
     data class ExpressionBlock(
@@ -69,6 +75,20 @@ sealed interface Expression {
         val elseExpression: Expression
     ) : Expression
 
+    // Loops
+    data class ForLoop(
+        val initializers: List<Expression>,
+        val condition: Expression,
+        val updates: List<Expression>,
+        val body: Expression
+    ) : Expression
+
+    data class ForEachLoop(
+        val variable: DeclareVariable,
+        val iterable: Expression,
+        val body: Expression
+    ) : Expression
+
     // Literals
     sealed interface Literal : Expression
     data class BooleanLiteral(val value: Boolean) : Literal
@@ -79,6 +99,7 @@ sealed interface Expression {
     data class FloatLiteral(val value: Float) : Literal
     data class DoubleLiteral(val value: Double) : Literal
     data class StringLiteral(val string: String) : Literal
+    data object Null : Literal
 
     // Assignment
     data class Assignment(
@@ -184,5 +205,11 @@ enum class Operator {
     PLUS,
     MINUS,
     MULTIPLY,
-    DIVIDE
+    DIVIDE,
+    LESS_THAN,
+    GREATER_THAN,
+    EQUALS,
+    NOT_EQUALS,
+    AND,
+    OR
 }

@@ -1,8 +1,8 @@
 package com.github.ai.astplayground
 
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
-import com.github.ai.astplayground.assertionDsl.ExprFactory.invoke
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory.int
+import com.github.ai.astplayground.assertionDsl.ExpressionFactory.invoke
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory.string
 import com.github.ai.astplayground.assertionDsl.IdentifierFactory.field
 import com.github.ai.astplayground.assertionDsl.IdentifierFactory.method
@@ -25,8 +25,6 @@ class MethodInvocationTest {
             expected = buildAst {
                 `class`("Test") {
                     method("m0", returns = void()) {
-                        "System" field "out" method "println"
-
                         call("System" field "out" method "println" invoke string("Hello"))
                         call("Math" method "abs" invoke int(1))
                     }

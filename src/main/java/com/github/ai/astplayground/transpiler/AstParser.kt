@@ -25,8 +25,10 @@ import com.sun.source.tree.BinaryTree
 import com.sun.source.tree.BlockTree
 import com.sun.source.tree.ClassTree
 import com.sun.source.tree.CompilationUnitTree
+import com.sun.source.tree.EnhancedForLoopTree
 import com.sun.source.tree.ExpressionStatementTree
 import com.sun.source.tree.ExpressionTree
+import com.sun.source.tree.ForLoopTree
 import com.sun.source.tree.IdentifierTree
 import com.sun.source.tree.IfTree
 import com.sun.source.tree.ImportTree
@@ -52,6 +54,7 @@ import javax.tools.JavaFileObject
 import javax.tools.SimpleJavaFileObject
 import javax.tools.ToolProvider
 import kotlin.math.max
+import org.koin.core.definition.Kind
 
 class AstParser {
 
@@ -203,6 +206,8 @@ class AstParser {
     ): Expression.Literal {
         val value = literal.value
 
+        if (literal.kind == Tree.Kind.NULL_LITERAL) return Expression.Null
+
         val literalByValue = when {
             value is Boolean -> Expression.BooleanLiteral(value)
             value is Char -> Expression.CharLiteral(value)
@@ -327,13 +332,41 @@ class AstParser {
                 )
             }
 
-            is BlockTree -> {
-                Expression.Expressions(
-                    expressions = convertStatements(statement.statements)
+            is ForLoopTree -> {
+                Expression.ForLoop(
+                    initializers = convertStatements(statement.initializer),
+                    condition = statement.condition?.let { convertExpression(it) }
+                        ?: Expression.Empty,
+                    updates = statement.update.map { update -> convertExpression(update.expression) },
+                    body = convertStatement(statement.statement)
                 )
             }
 
+            is EnhancedForLoopTree -> {
+                Expression.ForEachLoop(
+                    variable = Expression.DeclareVariable(
+                        name = statement.variable.name.toString(),
+                        type = statement.variable.type.toTypeReference(),
+                        initializer = statement.variable.initializer.toInitializerBlock(forType = null)
+                    ),
+                    iterable = convertExpression(statement.expression),
+                    body = convertStatement(statement.statement)
+                )
+            }
+
+            is BlockTree -> {
+                convertStatements(statement.statements).orEmpty()
+            }
+
             else -> throw InvalidAstTreeNodeException("Invalid statement", statement)
+        }
+    }
+
+    private fun List<Expression>.orEmpty(): Expression {
+        return when {
+            size > 1 -> Expression.Expressions(this)
+            size == 1 -> first()
+            else -> Expression.Empty
         }
     }
 
@@ -439,6 +472,12 @@ class AstParser {
             "MINUS" -> Operator.MINUS
             "MUL" -> Operator.MULTIPLY
             "DIV" -> Operator.DIVIDE
+            "LESS_THAN" -> Operator.LESS_THAN
+            "GREATER_THAN" -> Operator.GREATER_THAN
+            "EQUAL_TO" -> Operator.EQUALS
+            "NOT_EQUAL_TO" -> Operator.NOT_EQUALS
+            "CONDITIONAL_AND" -> Operator.AND
+            "CONDITIONAL_OR" -> Operator.OR
             else -> throw InvalidAstTreeNodeException("Invalid operator", this)
         }
     }
