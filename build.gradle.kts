@@ -1,11 +1,13 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.api.JavaVersion
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlinJvm)
     alias(libs.plugins.shadowJar)
+    alias(libs.plugins.kotlinPowerAssert)
 }
 
 group = "com.github.ai.astplayground"
@@ -18,6 +20,11 @@ repositories {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+@OptIn(ExperimentalKotlinGradlePluginApi::class)
+powerAssert {
+    functions = listOf("io.kotest.matchers.shouldBe")
 }
 
 tasks {
