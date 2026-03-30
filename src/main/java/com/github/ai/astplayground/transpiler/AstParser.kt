@@ -186,7 +186,7 @@ class AstParser {
             InitializerBlock.Empty
         } else {
             InitializerBlock.ExpressionBlock(
-                expression = convertExpression(initExpression)
+                expression = convertExpression(initExpression, forType = type)
             )
         }
 
@@ -304,7 +304,10 @@ class AstParser {
         return expressions.map { expression -> convertExpression(expression) }
     }
 
-    private fun convertExpression(expression: ExpressionTree): Expression {
+    private fun convertExpression(
+        expression: ExpressionTree,
+        forType: TypeReference? = null
+    ): Expression {
         return when (expression) {
             is MethodInvocationTree -> {
                 Expression.MethodInvocation(
@@ -320,7 +323,7 @@ class AstParser {
                 )
             }
 
-            is LiteralTree -> convertLiteral(expression, forType = null)
+            is LiteralTree -> convertLiteral(expression, forType = forType)
 
             is IdentifierTree -> Expression.Identifier(
                 name = expression.toString()

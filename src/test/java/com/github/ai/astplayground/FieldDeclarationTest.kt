@@ -2,6 +2,7 @@ package com.github.ai.astplayground
 
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory
+import com.github.ai.astplayground.assertionDsl.ExpressionFactory.typedIdentifier
 import com.github.ai.astplayground.assertionDsl.FieldFactory.boolean
 import com.github.ai.astplayground.assertionDsl.FieldFactory.byte
 import com.github.ai.astplayground.assertionDsl.FieldFactory.char
@@ -12,8 +13,10 @@ import com.github.ai.astplayground.assertionDsl.FieldFactory.long
 import com.github.ai.astplayground.assertionDsl.FieldFactory.short
 import com.github.ai.astplayground.assertionDsl.FieldFactory.string
 import com.github.ai.astplayground.assertionDsl.FieldFactory.variable
+import com.github.ai.astplayground.assertionDsl.InitializerFactory.expression
+import com.github.ai.astplayground.assertionDsl.InitializerFactory.stringValue
+import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.parameterizedType
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.type
-import com.github.ai.astplayground.transpiler.model.Expression
 import org.junit.jupiter.api.Test
 
 class FieldDeclarationTest {
@@ -233,7 +236,10 @@ class FieldDeclarationTest {
                     field(
                         variable(
                             "values",
-                            type("List", type("String"))
+                            parameterizedType("List", parameterizedWith = "String"),
+                            initializer = expression(
+                                ExpressionFactory.constructor(typedIdentifier("ArrayList", "String"))
+                            )
                         )
                     )
                 }

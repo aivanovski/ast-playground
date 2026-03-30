@@ -134,28 +134,6 @@ class CodeBlockBuilder(
     val expressions: MutableList<Expression> = mutableListOf()
 ) {
 
-    fun _systemOutPrintln(
-//        type: String,
-//        field: String,
-//        method: String,
-        argument: String
-    ) {
-        expressions.add(
-            Expression.MethodInvocation(
-                arguments = listOf(Expression.StringLiteral(argument)),
-                method = Expression.FieldAccess(
-                    name = "println",
-                    expression = Expression.FieldAccess(
-                        name = "out",
-                        expression = Expression.Identifier(
-                            name = "System"
-                        )
-                    )
-                )
-            )
-        )
-    }
-
     fun identifier(name: String): MethodInvocationBuilder {
         return MethodInvocationBuilder(
             blockBuilder = this,
@@ -207,11 +185,21 @@ class MethodInvocationBuilder(
 }
 
 object ExpressionFactory {
+
+    fun typedIdentifier(
+        name: String,
+        parameterType: String
+    ) = Expression.TypedIdentifier(
+        identifier = TypeReferenceFactory.type(name),
+        types = listOf(TypeReferenceFactory.type(parameterType))
+    )
+
     fun constructor(
-        identifier: Expression
+        identifier: Expression,
+        arguments: List<Expression> = emptyList()
     ) = Expression.ConstructorInvocation(
         identifier = identifier,
-        arguments = listOf()
+        arguments = arguments
     )
 
     fun string(value: String) = Expression.StringLiteral(value)
@@ -328,6 +316,11 @@ object FieldFactory {
 }
 
 object InitializerFactory {
+
+    fun expression(expression: Expression) = InitializerBlock.ExpressionBlock(
+        expression = expression
+    )
+
     fun stringValue(value: String) = InitializerBlock.ExpressionBlock(
         expression = Expression.StringLiteral(value)
     )
@@ -493,6 +486,15 @@ object NonPrimitiveTypes {
 }
 
 object TypeReferenceFactory {
+
+    fun parameterizedType(
+        name: String,
+        parameterizedWith: String
+    ) = TypeReference(
+        name = name,
+        kind = TypeReferenceKind.DECLARED,
+        typeArguments = listOf(type(parameterizedWith))
+    )
 
     fun type(
         name: String,
