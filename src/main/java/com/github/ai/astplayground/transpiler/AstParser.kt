@@ -20,6 +20,7 @@ import com.github.ai.astplayground.transpiler.model.isPrimitiveFloat
 import com.github.ai.astplayground.transpiler.model.isPrimitiveInt
 import com.github.ai.astplayground.transpiler.model.isPrimitiveLong
 import com.sun.source.tree.AnnotatedTypeTree
+import com.sun.source.tree.AssignmentTree
 import com.sun.source.tree.BinaryTree
 import com.sun.source.tree.BlockTree
 import com.sun.source.tree.ClassTree
@@ -389,6 +390,13 @@ class AstParser {
 
             is ParenthesizedTree -> {
                 convertExpression(expression.expression)
+            }
+
+            is AssignmentTree -> {
+                Expression.Assignment(
+                    variable = convertExpression(expression.variable),
+                    expression = convertExpression(expression.expression)
+                )
             }
 
             else -> throw InvalidAstTreeNodeException("Invalid expression", expression)

@@ -130,12 +130,63 @@ class TypeBuilder(
     }
 }
 
+//class MethodBuilder(
+//    val name: String,
+//    val modifiers: Set<Modifier>,
+//    val returnType: TypeReference,
+//    val parameters: List<Parameter>,
+////    val body: CodeBlock
+//) {
+//
+//    infix fun `return`(type: TypeReference) {
+//    }
+//
+//    fun buildMethod() {
+//
+//    }
+//}
+
 class CodeBlockBuilder(
     val expressions: MutableList<Expression> = mutableListOf()
 ) {
 
     fun variable(name: String, type: TypeReference, initializer: InitializerBlock) {
-        expressions.add(Expression.DeclareVariable(name, type, initializer))
+        expressions.add(
+            Expression.DeclareVariable(
+                name = name,
+                type = type,
+                initializer = initializer
+            )
+        )
+    }
+
+    fun assign(variable: Expression, expression: String) {
+        expressions.add(
+            Expression.Assignment(
+                variable = variable,
+                expression = ExpressionFactory.identifier(expression)
+            )
+        )
+    }
+
+    fun assign(variable: Expression, expression: Expression) {
+        expressions.add(
+            Expression.Assignment(
+                variable = variable,
+                expression = expression
+            )
+        )
+    }
+
+    fun assign(vararg fields: String, expression: Expression) {
+        val identifier = ExpressionFactory.identifier(*fields)
+
+        expressions.add(
+            Expression.Assignment(
+                variable = identifier,
+                expression = expression
+            )
+        )
     }
 
     fun `return`(expression: Expression) {
@@ -160,11 +211,8 @@ class CodeBlockBuilder(
         )
     }
 
-    fun identifier(name: String): MethodInvocationBuilder {
-        return MethodInvocationBuilder(
-            blockBuilder = this,
-            identifier = Expression.Identifier(name)
-        )
+    fun call(expression: Expression) {
+        expressions.add(expression)
     }
 
     fun buildBlock(): CodeBlock {
@@ -210,7 +258,33 @@ class MethodInvocationBuilder(
     }
 }
 
+
 object ExpressionFactory {
+
+    fun identifier(vararg path: String): Expression {
+        val identifier = Expression.Identifier(path.first())
+
+        // System.out.println => println -> out -> System
+        val fields = mutableListOf<Expression.FieldAccess>()
+
+        var previousField: Expression = identifier
+
+        for (fieldName in path.drop(1)) {
+            val field = Expression.FieldAccess(
+                name = fieldName,
+                expression = previousField
+            )
+
+            fields.add(field)
+            previousField = field
+        }
+
+        return if (fields.isNotEmpty()) {
+            fields.last()
+        } else {
+            identifier
+        }
+    }
 
     fun typedIdentifier(
         name: String,

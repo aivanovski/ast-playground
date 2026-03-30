@@ -1,8 +1,11 @@
 package com.github.ai.astplayground
 
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.assertionDsl.ExprFactory.invoke
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory.string
+import com.github.ai.astplayground.assertionDsl.IdentifierFactory.field
+import com.github.ai.astplayground.assertionDsl.IdentifierFactory.method
 import com.github.ai.astplayground.assertionDsl.InitializerFactory
 import com.github.ai.astplayground.assertionDsl.InitializerFactory.stringValue
 import com.github.ai.astplayground.assertionDsl.ParametersFactory
@@ -28,9 +31,7 @@ class CodeBlockTest {
             expected = buildAst {
                 `class`("Test") {
                     method("m0", returns = void()) {
-                        identifier("System")
-                            .fieldAccess("out")
-                            .invoke("println", string("Hello"))
+                        call("System" field "out" method "println" invoke string("Hello"))
                     }
                 }
             }

@@ -80,6 +80,12 @@ sealed interface Expression {
     data class DoubleLiteral(val value: Double) : Literal
     data class StringLiteral(val string: String) : Literal
 
+    // Assignment
+    data class Assignment(
+        val variable: Expression,
+        val expression: Expression
+    ) : Expression
+
     // Expressions
     data class Expressions(
         val expressions: List<Expression>

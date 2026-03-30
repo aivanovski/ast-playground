@@ -1,8 +1,10 @@
 package com.github.ai.astplayground
 
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.assertionDsl.ExprFactory.invoke
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory.string
-import com.github.ai.astplayground.assertionDsl.InitializerFactory.booleanValue
+import com.github.ai.astplayground.assertionDsl.IdentifierFactory.field
+import com.github.ai.astplayground.assertionDsl.IdentifierFactory.method
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.void
 import com.github.ai.astplayground.transpiler.model.Expression
 import org.junit.jupiter.api.Test
@@ -25,9 +27,7 @@ class IfStatementTest {
                 `class`("Test") {
                     method("m0", returns = void()) {
                         `if`(Expression.BooleanLiteral(true)) {
-                            identifier("System")
-                                .fieldAccess("out")
-                                .invoke("println", string("Hello"))
+                            call("System" field "out" method "println" invoke string("Hello"))
                         }
                     }
                 }

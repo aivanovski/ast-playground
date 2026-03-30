@@ -1,8 +1,11 @@
 package com.github.ai.astplayground
 
 import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.assertionDsl.ExprFactory.invoke
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory.int
 import com.github.ai.astplayground.assertionDsl.ExpressionFactory.string
+import com.github.ai.astplayground.assertionDsl.IdentifierFactory.field
+import com.github.ai.astplayground.assertionDsl.IdentifierFactory.method
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.void
 import org.junit.jupiter.api.Test
 
@@ -22,12 +25,10 @@ class MethodInvocationTest {
             expected = buildAst {
                 `class`("Test") {
                     method("m0", returns = void()) {
-                        identifier("System")
-                            .fieldAccess("out")
-                            .invoke("println", string("Hello"))
+                        "System" field "out" method "println"
 
-                        identifier("Math")
-                            .invoke("abs", int(1))
+                        call("System" field "out" method "println" invoke string("Hello"))
+                        call("Math" method "abs" invoke int(1))
                     }
                 }
             }
