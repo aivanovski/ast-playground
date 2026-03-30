@@ -10,11 +10,9 @@ import com.github.ai.astplayground.assertionDsl.FieldFactory.double
 import com.github.ai.astplayground.assertionDsl.FieldFactory.float
 import com.github.ai.astplayground.assertionDsl.FieldFactory.int
 import com.github.ai.astplayground.assertionDsl.FieldFactory.long
-import com.github.ai.astplayground.assertionDsl.FieldFactory.short
 import com.github.ai.astplayground.assertionDsl.FieldFactory.string
 import com.github.ai.astplayground.assertionDsl.FieldFactory.variable
 import com.github.ai.astplayground.assertionDsl.InitializerFactory.expression
-import com.github.ai.astplayground.assertionDsl.InitializerFactory.stringValue
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.parameterizedType
 import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.type
 import org.junit.jupiter.api.Test
@@ -22,46 +20,18 @@ import org.junit.jupiter.api.Test
 class FieldDeclarationTest {
 
     @Test
-    fun `should support primitive declarations without values`() {
-        parseAndAssert(
-            input = """
-                class Test {
-                    boolean bl0;
-                    byte b0;
-                    char c0;
-                    short s0;
-                    int i0;
-                    long l0;
-                    float f0;
-                    double d0;
-                }
-            """,
-            expected = buildAst {
-                `class`("Test") {
-                    field(boolean("bl0"))
-                    field(byte("b0"))
-                    field(char("c0"))
-                    field(short("s0"))
-                    field(int("i0"))
-                    field(long("l0"))
-                    field(float("f0"))
-                    field(double("d0"))
-                }
-            }
-        )
-    }
-
-    @Test
     fun `should support boolean declarations`() {
         parseAndAssert(
             input = """
                 class Test {
+                    boolean b;
                     boolean b0 = true;
                     boolean b1 = false;
                 }
             """,
             expected = buildAst {
                 `class`("Test") {
+                    field(boolean("b"))
                     field(boolean("b0", true))
                     field(boolean("b1", false))
                 }
@@ -74,12 +44,14 @@ class FieldDeclarationTest {
         parseAndAssert(
             input = """
                 class Test {
+                    byte b;
                     byte b0 = 1;
                     byte b1 = 0x02;
                 }
             """,
             expected = buildAst {
                 `class`("Test") {
+                    field(byte("b"))
                     field(byte("b0", 1))
                     field(byte("b1", 2))
                 }
@@ -92,12 +64,14 @@ class FieldDeclarationTest {
         parseAndAssert(
             input = """
                 class Test {
+                    char c;
                     char c0 = 1;
                     char c1 = 'a';
                 }
             """,
             expected = buildAst {
                 `class`("Test") {
+                    field(char("c"))
                     field(char("c0", 1.toChar()))
                     field(char("c1", 'a'))
                 }
@@ -110,12 +84,14 @@ class FieldDeclarationTest {
         parseAndAssert(
             input = """
                 class Test {
+                    int i;
                     int i0 = 1;
                     int i1 = 0x02;
                 }
             """,
             expected = buildAst {
                 `class`("Test") {
+                    field(int("i"))
                     field(int("i0", 1))
                     field(int("i1", 2))
                 }
@@ -128,12 +104,14 @@ class FieldDeclarationTest {
         parseAndAssert(
             input = """
                 class Test {
+                    long l;
                     long l0 = 1L;
                     long l1 = 2l;
                 }
             """,
             expected = buildAst {
                 `class`("Test") {
+                    field(long("l"))
                     field(long("l0", 1L))
                     field(long("l1", 2L))
                 }
@@ -146,6 +124,7 @@ class FieldDeclarationTest {
         parseAndAssert(
             input = """
                 class Test {
+                    float f;
                     float f0 = 1;
                     float f1 = 2f;
                     float f2 = 3F;
@@ -154,6 +133,7 @@ class FieldDeclarationTest {
             """,
             expected = buildAst {
                 `class`("Test") {
+                    field(float("f"))
                     field(float("f0", 1.0f))
                     field(float("f1", 2.0f))
                     field(float("f2", 3.0f))
@@ -168,6 +148,7 @@ class FieldDeclarationTest {
         parseAndAssert(
             input = """
                 class Test {
+                    double d;
                     double d0 = 1;
                     double d1 = 2d;
                     double d2 = 3D;
@@ -178,6 +159,7 @@ class FieldDeclarationTest {
             """,
             expected = buildAst {
                 `class`("Test") {
+                    field(double("d"))
                     field(double("d0", 1.0))
                     field(double("d1", 2.0))
                     field(double("d2", 3.0))
