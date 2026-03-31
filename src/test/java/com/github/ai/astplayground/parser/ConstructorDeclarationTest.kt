@@ -1,7 +1,8 @@
-package com.github.ai.astplayground
+package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
-import com.github.ai.astplayground.assertionDsl.ParametersFactory.int
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.ParametersFactory.int
+import com.github.ai.astplayground.parseAndAssert
 import org.junit.jupiter.api.Test
 
 class ConstructorDeclarationTest {

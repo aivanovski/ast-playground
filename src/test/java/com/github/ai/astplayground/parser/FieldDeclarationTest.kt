@@ -1,20 +1,21 @@
-package com.github.ai.astplayground
+package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.typedIdentifier
-import com.github.ai.astplayground.assertionDsl.FieldFactory.boolean
-import com.github.ai.astplayground.assertionDsl.FieldFactory.byte
-import com.github.ai.astplayground.assertionDsl.FieldFactory.char
-import com.github.ai.astplayground.assertionDsl.FieldFactory.double
-import com.github.ai.astplayground.assertionDsl.FieldFactory.float
-import com.github.ai.astplayground.assertionDsl.FieldFactory.int
-import com.github.ai.astplayground.assertionDsl.FieldFactory.long
-import com.github.ai.astplayground.assertionDsl.FieldFactory.string
-import com.github.ai.astplayground.assertionDsl.FieldFactory.variable
-import com.github.ai.astplayground.assertionDsl.InitializerFactory
-import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.parameterizedType
-import com.github.ai.astplayground.assertionDsl.TypeReferenceFactory.type
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.ExpressionFactory
+import com.github.ai.astplayground.astDsl.ExpressionFactory.typedIdentifier
+import com.github.ai.astplayground.astDsl.FieldFactory.boolean
+import com.github.ai.astplayground.astDsl.FieldFactory.byte
+import com.github.ai.astplayground.astDsl.FieldFactory.char
+import com.github.ai.astplayground.astDsl.FieldFactory.double
+import com.github.ai.astplayground.astDsl.FieldFactory.float
+import com.github.ai.astplayground.astDsl.FieldFactory.int
+import com.github.ai.astplayground.astDsl.FieldFactory.long
+import com.github.ai.astplayground.astDsl.FieldFactory.string
+import com.github.ai.astplayground.astDsl.FieldFactory.variable
+import com.github.ai.astplayground.astDsl.InitializerFactory
+import com.github.ai.astplayground.astDsl.TypeReferenceFactory.parameterizedType
+import com.github.ai.astplayground.astDsl.TypeReferenceFactory.type
+import com.github.ai.astplayground.parseAndAssert
 import com.github.ai.astplayground.transpiler.model.Expression
 import org.junit.jupiter.api.Test
 

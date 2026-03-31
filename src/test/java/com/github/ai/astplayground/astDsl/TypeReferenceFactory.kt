@@ -1,4 +1,4 @@
-package com.github.ai.astplayground.assertionDsl
+package com.github.ai.astplayground.astDsl
 
 import com.github.ai.astplayground.transpiler.model.TypeReference
 import com.github.ai.astplayground.transpiler.model.TypeReferenceKind

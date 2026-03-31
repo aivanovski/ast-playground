@@ -1,19 +1,17 @@
-package com.github.ai.astplayground
+package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.assertionDsl.AstBuilderDsl.buildAst
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.and
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.equal
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.int
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.invoke
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.literal
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.or
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.string
-import com.github.ai.astplayground.assertionDsl.IdentifierFactory.asIdentifier
-import com.github.ai.astplayground.assertionDsl.IdentifierFactory.field
-import com.github.ai.astplayground.assertionDsl.IdentifierFactory.method
-import com.github.ai.astplayground.assertionDsl.ParametersFactory
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Operator
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.ExpressionFactory.and
+import com.github.ai.astplayground.astDsl.ExpressionFactory.equal
+import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
+import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
+import com.github.ai.astplayground.astDsl.ExpressionFactory.or
+import com.github.ai.astplayground.astDsl.ExpressionFactory.string
+import com.github.ai.astplayground.astDsl.IdentifierFactory.asIdentifier
+import com.github.ai.astplayground.astDsl.IdentifierFactory.field
+import com.github.ai.astplayground.astDsl.IdentifierFactory.method
+import com.github.ai.astplayground.astDsl.ParametersFactory
+import com.github.ai.astplayground.parseAndAssert
 import org.junit.jupiter.api.Test
 
 class IfStatementTest {

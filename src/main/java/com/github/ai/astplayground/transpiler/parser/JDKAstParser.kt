@@ -1,4 +1,4 @@
-package com.github.ai.astplayground.transpiler
+package com.github.ai.astplayground.transpiler.parser
 
 import com.github.ai.astplayground.transpiler.model.CodeBlock
 import com.github.ai.astplayground.transpiler.model.Constructor
@@ -46,19 +46,20 @@ import com.sun.source.tree.Tree
 import com.sun.source.tree.VariableTree
 import com.sun.source.util.JavacTask
 import java.net.URI
-import javax.lang.model.element.Modifier as JDKModifier
-import javax.lang.model.type.TypeKind as JDKTypeKind
+import javax.lang.model.type.TypeKind
 import javax.tools.Diagnostic
 import javax.tools.DiagnosticCollector
 import javax.tools.JavaFileObject
 import javax.tools.SimpleJavaFileObject
 import javax.tools.ToolProvider
-import kotlin.math.max
-import org.koin.core.definition.Kind
 
-class AstParser {
+interface AstParser {
+    fun parseToAst(input: String): List<JavaAstNode>
+}
 
-    fun parseToAst(input: String): List<JavaAstNode> {
+class JDKAstParser : AstParser {
+
+    override fun parseToAst(input: String): List<JavaAstNode> {
         return readJdkAst(input).toAstNode()
     }
 
@@ -265,7 +266,7 @@ class AstParser {
 
             is PrimitiveTypeTree -> {
                 val kind = when (primitiveTypeKind) {
-                    JDKTypeKind.VOID -> TypeReferenceKind.VOID
+                    TypeKind.VOID -> TypeReferenceKind.VOID
                     else -> TypeReferenceKind.PRIMITIVE
                 }
 
@@ -451,15 +452,15 @@ class AstParser {
 
     }
 
-    private fun Set<JDKModifier>.toModifiers(): Set<Modifier> {
+    private fun Set<javax.lang.model.element.Modifier>.toModifiers(): Set<Modifier> {
         return this.map { modifier ->
             when (modifier) {
-                JDKModifier.PUBLIC -> Modifier.PUBLIC
-                JDKModifier.PROTECTED -> Modifier.PROTECTED
-                JDKModifier.PRIVATE -> Modifier.PRIVATE
-                JDKModifier.STATIC -> Modifier.STATIC
-                JDKModifier.FINAL -> Modifier.FINAL
-                JDKModifier.ABSTRACT -> Modifier.ABSTRACT
+                javax.lang.model.element.Modifier.PUBLIC -> Modifier.PUBLIC
+                javax.lang.model.element.Modifier.PROTECTED -> Modifier.PROTECTED
+                javax.lang.model.element.Modifier.PRIVATE -> Modifier.PRIVATE
+                javax.lang.model.element.Modifier.STATIC -> Modifier.STATIC
+                javax.lang.model.element.Modifier.FINAL -> Modifier.FINAL
+                javax.lang.model.element.Modifier.ABSTRACT -> Modifier.ABSTRACT
                 else -> throw InvalidAstTreeNodeException("Invalid modifier", modifier)
             }
         }.toSet()

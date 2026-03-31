@@ -1,6 +1,6 @@
-package com.github.ai.astplayground.assertionDsl
+package com.github.ai.astplayground.astDsl
 
-import com.github.ai.astplayground.assertionDsl.ExpressionFactory.literal
+import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.transpiler.model.CodeBlock
 import com.github.ai.astplayground.transpiler.model.Constructor
 import com.github.ai.astplayground.transpiler.model.Expression
