@@ -198,7 +198,20 @@ class KotlinSerializer : AstSerializer {
             is Expression.Null -> "null"
             is Expression.Literal -> formatLiteral(expression)
             is Expression.Identifier -> expression.name
+            is Expression.FieldAccess -> "${formatExpression(expression.expression)}.${expression.name}"
+            is Expression.BinaryExpression -> {
+                val lhs = formatExpression(expression.lhs)
+                val rhs = formatExpression(expression.rhs)
+                "$lhs ${formatOperator(expression.operator)} $rhs"
+            }
+            is Expression.MethodInvocation -> {
+                val method = formatExpression(expression.method)
+                val arguments = expression.arguments
+                    .joinToString(separator = ", ") { argument -> formatExpression(argument) }
+                "$method($arguments)"
+            }
             is Expression.ConstructorInvocation -> formatConstructorInvocation(expression)
+            is Expression.DeclareVariable -> formatVariableDeclaration(expression)
             is Expression.Return -> "return ${formatExpression(expression.expression)}"
             else -> throw NotImplementedError("Not implemented expression: $expression")
         }
@@ -214,6 +227,32 @@ class KotlinSerializer : AstSerializer {
         }.joinToString(separator = ",")
 
         return "$identifier($arguments)"
+    }
+
+    private fun formatVariableDeclaration(expression: Expression.DeclareVariable): String {
+        val isNonNullable =
+            expression.type.isPrimitive()
+                || expression.initializer.isLiteral()
+                || expression.initializer.isConstructorInvocation()
+
+        val type = formatType(expression.type, isNullable = !isNonNullable)
+        val value = formatFieldValue(expression.initializer, expression.type)
+        return "var ${expression.name}: $type = $value"
+    }
+
+    private fun formatOperator(operator: com.github.ai.astplayground.transpiler.model.Operator): String {
+        return when (operator) {
+            com.github.ai.astplayground.transpiler.model.Operator.PLUS -> "+"
+            com.github.ai.astplayground.transpiler.model.Operator.MINUS -> "-"
+            com.github.ai.astplayground.transpiler.model.Operator.MULTIPLY -> "*"
+            com.github.ai.astplayground.transpiler.model.Operator.DIVIDE -> "/"
+            com.github.ai.astplayground.transpiler.model.Operator.LESS_THAN -> "<"
+            com.github.ai.astplayground.transpiler.model.Operator.GREATER_THAN -> ">"
+            com.github.ai.astplayground.transpiler.model.Operator.EQUALS -> "=="
+            com.github.ai.astplayground.transpiler.model.Operator.NOT_EQUALS -> "!="
+            com.github.ai.astplayground.transpiler.model.Operator.AND -> "&&"
+            com.github.ai.astplayground.transpiler.model.Operator.OR -> "||"
+        }
     }
 
     private fun formatLiteral(literal: Expression.Literal): String {
