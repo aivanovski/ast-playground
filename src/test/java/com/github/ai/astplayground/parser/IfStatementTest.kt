@@ -17,83 +17,20 @@ import org.junit.jupiter.api.Test
 class IfStatementTest {
 
     @Test
-    fun `should support if with literal`() {
-        parseAndAssert(
-            input = """
-                class Test {
-                    void m0() {
-                        if (true) {
-                            System.out.println("Hello");
-                        }
-                    }
-                }
-            """,
-            expected = buildAst {
-                `class`("Test") {
-                    void_method("m0") {
-                        `if`(true.literal()) {
-                            call("System" field "out" method "println" invoke string("Hello"))
-                        }
-                    }
-                }
-            }
-        )
-    }
-
-    @Test
-    fun `should support if with and condition`() {
-        parseAndAssert(
-            input = """
-                class Test {
-                    void m0() {
-                        if (true && false) {
-                            System.out.println("Hello");
-                        }
-                    }
-                }
-            """,
-            expected = buildAst {
-                `class`("Test") {
-                    void_method("m0") {
-                        `if`(true.literal() and false.literal()) {
-                            call("System" field "out" method "println" invoke string("Hello"))
-                        }
-                    }
-                }
-            }
-        )
-    }
-
-    @Test
-    fun `should support if with or condition`() {
-        parseAndAssert(
-            input = """
-                class Test {
-                    void m0() {
-                        if (true || false) {
-                            System.out.println("Hello");
-                        }
-                    }
-                }
-            """,
-            expected = buildAst {
-                `class`("Test") {
-                    void_method("m0") {
-                        `if`(true.literal() or false.literal()) {
-                            call("System" field "out" method "println" invoke string("Hello"))
-                        }
-                    }
-                }
-            }
-        )
-    }
-
-    @Test
-    fun `should support if with equals condition`() {
+    fun `should support if statements`() {
         parseAndAssert(
             input = """
                 class Test {
                     void m0(int i) {
+                        if (true) {
+                            System.out.println("Hello");
+                        }
+                        if (true && false) {
+                            System.out.println("Hello");
+                        }
+                        if (true || false) {
+                            System.out.println("Hello");
+                        }
                         if (i == 1) {
                             System.out.println("Hello");
                         }
@@ -103,6 +40,15 @@ class IfStatementTest {
             expected = buildAst {
                 `class`("Test") {
                     void_method("m0", ParametersFactory.int("i")) {
+                        `if`(true.literal()) {
+                            call("System" field "out" method "println" invoke string("Hello"))
+                        }
+                        `if`(true.literal() and false.literal()) {
+                            call("System" field "out" method "println" invoke string("Hello"))
+                        }
+                        `if`(true.literal() or false.literal()) {
+                            call("System" field "out" method "println" invoke string("Hello"))
+                        }
                         `if`("i".asIdentifier() equal 1.literal()) {
                             call("System" field "out" method "println" invoke string("Hello"))
                         }
