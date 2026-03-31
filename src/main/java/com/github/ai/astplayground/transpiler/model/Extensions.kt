@@ -17,3 +17,15 @@ fun TypeReference.isPrimitiveFloat() =
 
 fun TypeReference.isPrimitiveDouble() =
     name == "double" && kind == TypeReferenceKind.PRIMITIVE
+
+fun TypeReference.isPrimitiveBoolean() =
+    name == "boolean" && kind == TypeReferenceKind.PRIMITIVE
+
+fun TypeReference.isPrimitive() =
+    isPrimitiveBoolean()
+        || isPrimitiveByte()
+        || isPrimitiveChar()
+        || isPrimitiveInt()
+        || isPrimitiveLong()
+        || isPrimitiveFloat()
+        || isPrimitiveDouble()
