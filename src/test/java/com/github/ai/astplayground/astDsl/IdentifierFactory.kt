@@ -1,8 +1,17 @@
 package com.github.ai.astplayground.astDsl
 
 import com.github.ai.astplayground.transpiler.model.Expression
+import com.github.ai.astplayground.transpiler.model.Operator
 
 object IdentifierFactory {
+
+    infix fun Expression.Identifier.plus(another: Expression): Expression.BinaryExpression {
+        return Expression.BinaryExpression(
+            operator = Operator.PLUS,
+            lhs = this,
+            rhs = another
+        )
+    }
 
     fun String.asIdentifier(): Expression.Identifier {
         return Expression.Identifier(
