@@ -1,6 +1,7 @@
 package com.github.ai.astplayground.transpiler.serializer
 
 import com.github.ai.astplayground.transpiler.model.CodeBlock
+import com.github.ai.astplayground.transpiler.model.Constructor
 import com.github.ai.astplayground.transpiler.model.Expression
 import com.github.ai.astplayground.transpiler.model.Field
 import com.github.ai.astplayground.transpiler.model.InitializerBlock
@@ -58,6 +59,11 @@ class KotlinSerializer : AstSerializer {
                     serialize(field)
                 }
 
+                for (constructor in classNode.constructors) {
+                    newLine()
+                    serialize(constructor)
+                }
+
                 for (method in instanceMethods) {
                     newLine()
                     serialize(method)
@@ -88,6 +94,27 @@ class KotlinSerializer : AstSerializer {
         val value = formatFieldValue(field.initializer, field.type)
 
         append("var $name: $type = $value")
+    }
+
+    private fun SourceCodeBuilder.serialize(constructor: Constructor) {
+        val parameters = constructor.parameters
+            .map { parameter -> formatParameter(parameter) }
+            .joinToString(separator = ", ")
+
+        append("constructor($parameters)")
+
+        if (constructor.body is CodeBlock.Expressions) {
+            val expressions = constructor.body.expressions
+
+            appendBlock {
+                for (expression in expressions) {
+                    newLine()
+                    append(formatExpression(expression))
+                }
+            }
+        } else {
+            append(" {}")
+        }
     }
 
     private fun SourceCodeBuilder.serialize(method: Method) {
