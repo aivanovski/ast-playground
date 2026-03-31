@@ -99,7 +99,7 @@ class ForLoopTest {
                 import java.util.List
                 class Test {
                     fun m0(nums: List<Integer>?) {
-                        for (i: Int in (nums ?: emptyList())) {
+                        for (i in (nums ?: emptyList())) {
                             System.out.println(i)
                         }
                     }

@@ -293,7 +293,8 @@ class KotlinSerializer : AstSerializer {
         val variableType = formatType(expression.variable.type, isNullable = isNullable)
         val iterable = formatExpression(expression.iterable)
         val body = formatExpression(expression.body)
-        return "for (${expression.variable.name}: $variableType in ($iterable ?: emptyList())) {\n$body\n}"
+        // TODO: check for the type of collection
+        return "for (${expression.variable.name} in ($iterable ?: emptyList())) {\n$body\n}"
     }
 
     private fun formatConstructorInvocation(
