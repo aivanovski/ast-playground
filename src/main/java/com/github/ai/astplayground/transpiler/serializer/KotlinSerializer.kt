@@ -28,6 +28,7 @@ class KotlinSerializer : AstSerializer {
         for (node in nodes) {
             when (node) {
                 is JavaAstNode.Package -> content.serialize(node)
+                is JavaAstNode.Import -> content.serialize(node)
                 is JavaAstNode.Class -> content.serialize(node)
 
                 else -> throw NotImplementedError("Unhandled node: $node")
@@ -39,6 +40,12 @@ class KotlinSerializer : AstSerializer {
 
     private fun SourceCodeBuilder.serialize(node: JavaAstNode.Package) {
         appendLine("package ${node.name}")
+    }
+
+    private fun SourceCodeBuilder.serialize(node: JavaAstNode.Import) {
+        val staticKeyword = if (node.isStatic) "static " else ""
+        val importName = if (node.isAsterisk && !node.name.endsWith(".*")) "${node.name}.*" else node.name
+        appendLine("import $staticKeyword$importName")
     }
 
     private fun SourceCodeBuilder.serialize(classNode: JavaAstNode.Class) {
