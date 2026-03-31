@@ -1,9 +1,13 @@
 package com.github.ai.astplayground.transpiler.serializer
 
+import com.github.ai.astplayground.transpiler.model.CodeBlock
 import com.github.ai.astplayground.transpiler.model.Expression
 import com.github.ai.astplayground.transpiler.model.Field
 import com.github.ai.astplayground.transpiler.model.InitializerBlock
 import com.github.ai.astplayground.transpiler.model.JavaAstNode
+import com.github.ai.astplayground.transpiler.model.Method
+import com.github.ai.astplayground.transpiler.model.Modifier
+import com.github.ai.astplayground.transpiler.model.Parameter
 import com.github.ai.astplayground.transpiler.model.TypeReference
 import com.github.ai.astplayground.transpiler.model.TypeReferenceKind
 import com.github.ai.astplayground.transpiler.model.isPrimitive
@@ -14,7 +18,6 @@ import com.github.ai.astplayground.transpiler.model.isPrimitiveDouble
 import com.github.ai.astplayground.transpiler.model.isPrimitiveFloat
 import com.github.ai.astplayground.transpiler.model.isPrimitiveInt
 import com.github.ai.astplayground.transpiler.model.isPrimitiveLong
-import org.checkerframework.checker.initialization.qual.Initialized
 
 class KotlinSerializer : AstSerializer {
 
@@ -34,19 +37,41 @@ class KotlinSerializer : AstSerializer {
     }
 
     private fun SourceCodeBuilder.serialize(node: JavaAstNode.Package) {
-        append("package ${node.name}")
+        appendLine("package ${node.name}")
     }
 
-    private fun SourceCodeBuilder.serialize(node: JavaAstNode.Class) {
-        append("class ${node.name}")
+    private fun SourceCodeBuilder.serialize(classNode: JavaAstNode.Class) {
+        appendLine("class ${classNode.name}")
 
         val hasBody =
-            (node.fields.isNotEmpty() || node.constructors.isNotEmpty() || node.methods.isNotEmpty())
+            (classNode.fields.isNotEmpty()
+                || classNode.constructors.isNotEmpty()
+                || classNode.methods.isNotEmpty())
 
         if (hasBody) {
+            val instanceMethods = classNode.methods.filter { method -> !method.isStatic() }
+            val staticMethods = classNode.methods.filter { method -> method.isStatic() }
+
             appendBlock {
-                for (field in node.fields) {
+                for (field in classNode.fields) {
+                    newLine()
                     serialize(field)
+                }
+
+                for (method in instanceMethods) {
+                    newLine()
+                    serialize(method)
+                }
+
+                if (staticMethods.isNotEmpty()) {
+                    newLine()
+                    append("companion object")
+                    appendBlock {
+                        for (method in staticMethods) {
+                            newLine()
+                            serialize(method)
+                        }
+                    }
                 }
             }
         }
@@ -54,14 +79,50 @@ class KotlinSerializer : AstSerializer {
 
     private fun SourceCodeBuilder.serialize(field: Field) {
         val isNonNullable =
-            field.type.isPrimitive() || (field.initializer is InitializerBlock.ExpressionBlock &&
-                field.initializer.expression is Expression.Literal)
+            field.type.isPrimitive()
+                || field.initializer.isLiteral()
+                || field.initializer.isConstructorInvocation()
 
         val name = field.name
-        val type = if (isNonNullable) formatType(field.type) else formatType(field.type) + "?"
+        val type = formatType(field.type, isNullable = !isNonNullable)
         val value = formatFieldValue(field.initializer, field.type)
 
         append("var $name: $type = $value")
+    }
+
+    private fun SourceCodeBuilder.serialize(method: Method) {
+        val name = method.name
+        val isReturnUnit = (method.returnType.kind == TypeReferenceKind.VOID)
+        val isReturnTypeNullable = !method.returnType.isPrimitive()
+        val returnType = formatType(method.returnType, isNullable = isReturnTypeNullable)
+
+        val parameters = method.parameters
+            .map { parameter -> formatParameter(parameter) }
+            .joinToString(separator = ", ")
+
+        val returnDeclaration = if (!isReturnUnit) ": $returnType" else ""
+        val declaration = "fun $name($parameters)$returnDeclaration"
+        append(declaration)
+
+        if (method.body is CodeBlock.Expressions) {
+            val expressions = method.body.expressions
+
+            appendBlock {
+                for (expression in expressions) {
+                    newLine()
+                    append(formatExpression(expression))
+                }
+            }
+        } else {
+            append(" {}")
+        }
+    }
+
+    private fun formatParameter(parameter: Parameter): String {
+        val name = parameter.name
+        val isNullable = !parameter.type.isPrimitive()
+        val type = formatType(parameter.type, isNullable = isNullable)
+        return "$name: $type"
     }
 
     private fun formatFieldValue(
@@ -76,12 +137,19 @@ class KotlinSerializer : AstSerializer {
     }
 
     private fun formatType(
-        type: TypeReference
+        type: TypeReference,
+        isNullable: Boolean = true
     ): String {
-        return if (type.kind == TypeReferenceKind.PRIMITIVE) {
-            type.name.first().uppercase() + type.name.drop(1)
+        val type = when (type.kind) {
+            TypeReferenceKind.PRIMITIVE -> type.name.first().uppercase() + type.name.drop(1)
+            TypeReferenceKind.VOID -> "Unit"
+            else -> type.name
+        }
+
+        return if (isNullable) {
+            "$type?"
         } else {
-            type.name
+            type
         }
     }
 
@@ -96,28 +164,60 @@ class KotlinSerializer : AstSerializer {
             type.isPrimitiveDouble() -> "0.0"
             else -> "null"
         }
-
     }
 
     private fun formatExpression(expression: Expression): String {
         return when (expression) {
+            is Expression.Null -> "null"
             is Expression.Literal -> formatLiteral(expression)
+            is Expression.Identifier -> expression.name
+            is Expression.ConstructorInvocation -> formatConstructorInvocation(expression)
+            is Expression.Return -> "return ${formatExpression(expression.expression)}"
             else -> throw NotImplementedError("Not implemented expression: $expression")
         }
+    }
+
+    private fun formatConstructorInvocation(
+        expression: Expression.ConstructorInvocation
+    ): String {
+        val identifier = formatExpression(expression.identifier)
+
+        val arguments = expression.arguments.map { argument ->
+            formatExpression(argument)
+        }.joinToString(separator = ",")
+
+        return "$identifier($arguments)"
     }
 
     private fun formatLiteral(literal: Expression.Literal): String {
         return when (literal) {
             is Expression.BooleanLiteral -> literal.value.toString()
             is Expression.ByteLiteral -> literal.value.toString()
-            is Expression.CharLiteral -> {
-                "${literal.value.code}.toChar()"
-            }
+            is Expression.CharLiteral -> "${literal.value.code}.toChar()"
             is Expression.IntLiteral -> literal.value.toString()
             is Expression.LongLiteral -> literal.value.toString() + "L"
             is Expression.FloatLiteral -> literal.value.toString() + "F"
             is Expression.DoubleLiteral -> literal.value.toString()
+            is Expression.StringLiteral -> "\"" + literal.value + "\""
             else -> literal.toString()
         }
+    }
+
+    private fun Method.isStatic(): Boolean {
+        return Modifier.STATIC in modifiers
+    }
+
+    private fun InitializerBlock.isLiteral(): Boolean {
+        return this is InitializerBlock.ExpressionBlock
+            && expression is Expression.Literal
+    }
+
+    private fun InitializerBlock.isConstructorInvocation(): Boolean {
+        return this is InitializerBlock.ExpressionBlock
+            && expression is Expression.ConstructorInvocation
+    }
+
+    private fun CodeBlock.isNotEmpty(): Boolean {
+        return this != CodeBlock.Empty
     }
 }

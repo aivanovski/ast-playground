@@ -443,9 +443,16 @@ class JDKAstParser : AstParser {
         val expression = this
 
         return if (expression != null) {
-            InitializerBlock.ExpressionBlock(
-                expression = convertExpression(expression = expression, forType = forType)
-            )
+            val convertedExpression = convertExpression(expression = expression, forType = forType)
+            val isNull = (convertedExpression == Expression.Null)
+
+            if (!isNull) {
+                InitializerBlock.ExpressionBlock(
+                    expression = convertExpression(expression = expression, forType = forType)
+                )
+            } else {
+                InitializerBlock.Empty
+            }
         } else {
             InitializerBlock.Empty
         }

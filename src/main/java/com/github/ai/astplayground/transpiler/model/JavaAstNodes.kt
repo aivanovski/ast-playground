@@ -98,7 +98,7 @@ sealed interface Expression {
     data class LongLiteral(val value: Long) : Literal
     data class FloatLiteral(val value: Float) : Literal
     data class DoubleLiteral(val value: Double) : Literal
-    data class StringLiteral(val string: String) : Literal
+    data class StringLiteral(val value: String) : Literal
     data object Null : Literal
 
     // Assignment
@@ -157,10 +157,6 @@ sealed interface Expression {
 sealed interface CodeBlock {
 
     data object Empty : CodeBlock
-
-    data class RawStatements(
-        val statements: List<String>
-    ) : CodeBlock
 
     data class Expressions(
         val expressions: List<Expression>

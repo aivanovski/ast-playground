@@ -1,6 +1,7 @@
 package com.github.ai.astplayground.serializer
 
 import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.astDsl.FieldFactory.boolean
 import com.github.ai.astplayground.astDsl.FieldFactory.byte
 import com.github.ai.astplayground.astDsl.FieldFactory.char
@@ -8,6 +9,11 @@ import com.github.ai.astplayground.astDsl.FieldFactory.double
 import com.github.ai.astplayground.astDsl.FieldFactory.float
 import com.github.ai.astplayground.astDsl.FieldFactory.int
 import com.github.ai.astplayground.astDsl.FieldFactory.long
+import com.github.ai.astplayground.astDsl.FieldFactory.string
+import com.github.ai.astplayground.astDsl.FieldFactory.variable
+import com.github.ai.astplayground.astDsl.IdentifierFactory.invokeConstructor
+import com.github.ai.astplayground.astDsl.InitializerFactory.initializer
+import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
 import com.github.ai.astplayground.serializeAndAssert
 import org.junit.jupiter.api.Test
 
@@ -72,6 +78,34 @@ class FieldDeclarationTest {
                     var d1: Double = 0.2
                 }
             """
+        )
+    }
+
+    @Test
+    fun `should support typed declarations`() {
+        serializeAndAssert(
+            input = buildAst {
+                `class`("Test") {
+                    field(variable("o", "Object".asType()))
+                    field(variable("s", "String".asType()))
+                    field(string("s0", "abc"))
+                    field(
+                        variable(
+                            "sb",
+                            "StringBuilder".asType(),
+                            initializer { "StringBuilder" invokeConstructor listOf("cde".literal()) }
+                        )
+                    )
+                }
+            },
+            expected = """
+                class Test {
+                    var o: Object? = null
+                    var s: String? = null
+                    var s0: String = "abc"
+                    var sb: StringBuilder = StringBuilder("cde")
+                }
+            """.trimIndent()
         )
     }
 }

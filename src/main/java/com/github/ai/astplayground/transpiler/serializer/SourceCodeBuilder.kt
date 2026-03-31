@@ -4,11 +4,19 @@ class SourceCodeBuilder {
 
     private val content = StringBuilder()
 
-    fun append(line: String) {
+    fun newLine() {
+        content.append("\n")
+    }
+
+    fun appendLine(line: String) {
         if (content.isNotEmpty()) {
             content.append("\n")
         }
         content.append(line)
+    }
+
+    fun append(word: String) {
+        content.append(word)
     }
 
     fun appendBlock(block: String) {
@@ -25,10 +33,10 @@ class SourceCodeBuilder {
             .build()
 
         if (block.isNotBlank()) {
-            if (content.isNotEmpty() && content.last().isLetterOrDigit()) {
+            if (content.isNotEmpty() && !content.last().isWhitespace()) {
                 content.append(" ")
             }
-            content.append("{\n$block\n}")
+            content.append("{$block\n}")
         }
     }
 

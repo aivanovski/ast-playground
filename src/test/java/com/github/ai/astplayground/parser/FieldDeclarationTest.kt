@@ -1,7 +1,7 @@
 package com.github.ai.astplayground.parser
 
 import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
-import com.github.ai.astplayground.astDsl.ExpressionFactory
+import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.astDsl.ExpressionFactory.typedIdentifier
 import com.github.ai.astplayground.astDsl.FieldFactory.boolean
 import com.github.ai.astplayground.astDsl.FieldFactory.byte
@@ -12,11 +12,12 @@ import com.github.ai.astplayground.astDsl.FieldFactory.int
 import com.github.ai.astplayground.astDsl.FieldFactory.long
 import com.github.ai.astplayground.astDsl.FieldFactory.string
 import com.github.ai.astplayground.astDsl.FieldFactory.variable
+import com.github.ai.astplayground.astDsl.IdentifierFactory.invokeConstructor
 import com.github.ai.astplayground.astDsl.InitializerFactory
+import com.github.ai.astplayground.astDsl.InitializerFactory.initializer
+import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.parameterizedType
-import com.github.ai.astplayground.astDsl.TypeReferenceFactory.type
 import com.github.ai.astplayground.parseAndAssert
-import com.github.ai.astplayground.transpiler.model.Expression
 import org.junit.jupiter.api.Test
 
 class FieldDeclarationTest {
@@ -178,30 +179,30 @@ class FieldDeclarationTest {
         parseAndAssert(
             input = """
                 class Test {
-                    Object o0;
-                    String s0;
+                    Object o;
+                    Object o0 = null;
+                    String s;
+                    String s0 = null;
+                    String s1 = "abc";
+                    StringBuilder sb = new StringBuilder("cde");
                 }
             """,
             expected = buildAst {
                 `class`("Test") {
-                    field(variable(name = "o0", type("Object")))
-                    field(variable(name = "s0", type("String")))
-                }
-            }
-        )
-    }
-
-    @Test
-    fun `should support string declarations`() {
-        parseAndAssert(
-            input = """
-                class Test {
-                    String s0 = "abc";
-                }
-            """,
-            expected = buildAst {
-                `class`("Test") {
-                    field(string("s0", "abc"))
+                    field(variable("o", "Object".asType()))
+                    field(variable("o0", "Object".asType()))
+                    field(variable("s", "String".asType()))
+                    field(variable("s0", "String".asType()))
+                    field(variable("s1", "String".asType(), initializer { "abc".literal() }))
+                    field(
+                        variable(
+                            "sb",
+                            "StringBuilder".asType(),
+                            initializer {
+                                "StringBuilder" invokeConstructor listOf("cde".literal())
+                            }
+                        )
+                    )
                 }
             }
         )
@@ -223,31 +224,6 @@ class FieldDeclarationTest {
                             parameterizedType("List", parameterizedWith = "String"),
                             initializer = InitializerFactory.constructor(
                                 typedIdentifier("ArrayList", "String")
-                            )
-                        )
-                    )
-                }
-            }
-        )
-    }
-
-    @Test
-    fun `should support constructor invocation`() {
-        parseAndAssert(
-            input = """
-                class Test {
-                    String s0 = new String("abc");
-                }
-            """,
-            expected = buildAst {
-                `class`("Test") {
-                    field(
-                        variable(
-                            "s0",
-                            type("String"),
-                            initializer = InitializerFactory.constructor(
-                                Expression.Identifier("String"),
-                                listOf(ExpressionFactory.string("abc"))
                             )
                         )
                     )
