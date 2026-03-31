@@ -611,6 +611,12 @@ object NonPrimitiveTypes {
 
 object VariableFactory {
 
+    fun String.asVariableOf(type: TypeReference) = Variable(
+        name = this,
+        type = type,
+        initializer = InitializerBlock.Empty
+    )
+
     fun String.asVariableOf(typeName: String) = Variable(
         name = this,
         type = TypeReference(

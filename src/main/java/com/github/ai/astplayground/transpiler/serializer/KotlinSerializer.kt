@@ -30,7 +30,6 @@ class KotlinSerializer : AstSerializer {
                 is JavaAstNode.Package -> content.serialize(node)
                 is JavaAstNode.Import -> content.serialize(node)
                 is JavaAstNode.Class -> content.serialize(node)
-
                 else -> throw NotImplementedError("Unhandled node: $node")
             }
         }
@@ -44,7 +43,8 @@ class KotlinSerializer : AstSerializer {
 
     private fun SourceCodeBuilder.serialize(node: JavaAstNode.Import) {
         val staticKeyword = if (node.isStatic) "static " else ""
-        val importName = if (node.isAsterisk && !node.name.endsWith(".*")) "${node.name}.*" else node.name
+        val importName =
+            if (node.isAsterisk && !node.name.endsWith(".*")) "${node.name}.*" else node.name
         appendLine("import $staticKeyword$importName")
     }
 
@@ -154,9 +154,13 @@ class KotlinSerializer : AstSerializer {
 
     private fun formatParameter(parameter: Parameter): String {
         val name = parameter.name
-        val isNullable = !parameter.type.isPrimitive()
+        val isNullable = isTypeNullable(parameter.type)
         val type = formatType(parameter.type, isNullable = isNullable)
         return "$name: $type"
+    }
+
+    private fun isTypeNullable(type: TypeReference): Boolean {
+        return !type.isPrimitive()
     }
 
     private fun formatFieldValue(
@@ -174,16 +178,26 @@ class KotlinSerializer : AstSerializer {
         type: TypeReference,
         isNullable: Boolean = true
     ): String {
-        val type = when (type.kind) {
+        val argTypes = type.typeArguments
+            .map { argType -> formatType(argType, isNullable = false) }
+            .joinToString(separator = ", ")
+
+        val formattedType = when (type.kind) {
             TypeReferenceKind.PRIMITIVE -> type.name.first().uppercase() + type.name.drop(1)
             TypeReferenceKind.VOID -> "Unit"
-            else -> type.name
+            else -> {
+                if (argTypes.isNotEmpty()) {
+                    "${type.name}<$argTypes>"
+                } else {
+                    type.name
+                }
+            }
         }
 
         return if (isNullable) {
-            "$type?"
+            "$formattedType?"
         } else {
-            type
+            formattedType
         }
     }
 
@@ -205,23 +219,81 @@ class KotlinSerializer : AstSerializer {
             is Expression.Null -> "null"
             is Expression.Literal -> formatLiteral(expression)
             is Expression.Identifier -> expression.name
+            is Expression.Expressions -> expression.expressions.joinToString(separator = "\n") { nested ->
+                formatExpression(nested)
+            }
+
+            is Expression.If -> formatIfExpression(expression)
+            is Expression.ForLoop -> formatForLoop(expression)
+            is Expression.ForEachLoop -> formatForEachLoop(expression)
+            is Expression.Assignment -> {
+                val variable = formatExpression(expression.variable)
+                val value = formatExpression(expression.expression)
+                "$variable = $value"
+            }
+
             is Expression.FieldAccess -> "${formatExpression(expression.expression)}.${expression.name}"
             is Expression.BinaryExpression -> {
                 val lhs = formatExpression(expression.lhs)
                 val rhs = formatExpression(expression.rhs)
                 "$lhs ${formatOperator(expression.operator)} $rhs"
             }
+
             is Expression.MethodInvocation -> {
                 val method = formatExpression(expression.method)
                 val arguments = expression.arguments
                     .joinToString(separator = ", ") { argument -> formatExpression(argument) }
                 "$method($arguments)"
             }
+
             is Expression.ConstructorInvocation -> formatConstructorInvocation(expression)
             is Expression.DeclareVariable -> formatVariableDeclaration(expression)
             is Expression.Return -> "return ${formatExpression(expression.expression)}"
             else -> throw NotImplementedError("Not implemented expression: $expression")
         }
+    }
+
+    private fun formatIfExpression(expression: Expression.If): String {
+        val condition = formatExpression(expression.condition)
+        val thenBlock = formatBranchExpression(expression.thenExpression)
+        val elseBlock = if (expression.elseExpression != Expression.Empty) {
+            " else ${formatBranchExpression(expression.elseExpression)}"
+        } else {
+            ""
+        }
+
+        return "if ($condition) $thenBlock$elseBlock"
+    }
+
+    private fun formatBranchExpression(expression: Expression): String {
+        val content = formatExpression(expression)
+        return "{\n$content\n}"
+    }
+
+    private fun formatForLoop(expression: Expression.ForLoop): String {
+        val initializers = expression.initializers.joinToString(separator = "\n") { initializer ->
+            formatExpression(initializer)
+        }
+        val condition = formatExpression(expression.condition)
+        val body = formatExpression(expression.body)
+        val updates = expression.updates.joinToString(separator = "\n") { update ->
+            formatExpression(update)
+        }
+        val bodyWithUpdates = listOf(body, updates)
+            .filter { it.isNotBlank() }
+            .joinToString(separator = "\n")
+
+        return listOf(initializers, "while ($condition) {\n$bodyWithUpdates\n}")
+            .filter { it.isNotBlank() }
+            .joinToString(separator = "\n")
+    }
+
+    private fun formatForEachLoop(expression: Expression.ForEachLoop): String {
+        val isNullable = !expression.variable.type.isPrimitive()
+        val variableType = formatType(expression.variable.type, isNullable = isNullable)
+        val iterable = formatExpression(expression.iterable)
+        val body = formatExpression(expression.body)
+        return "for (${expression.variable.name}: $variableType in ($iterable ?: emptyList())) {\n$body\n}"
     }
 
     private fun formatConstructorInvocation(
