@@ -18,12 +18,28 @@ fun serializeAndAssert(
     input: List<JavaAstNode>,
     expected: String
 ) {
-    val trimmed = expected
+    val expectedTrimmed = expected
         .split("\n")
         .map { line -> line.trim() }
         .filter { line -> line.isNotEmpty() }
         .joinToString(separator = "\n")
 
     val serializationResult = KotlinSerializer().serialize(input)
-    serializationResult shouldBe trimmed
+    serializationResult shouldBe expectedTrimmed
+}
+
+fun transpileAndAssert(
+    input: String,
+    expected: String
+) {
+    val ast = JDKAstParser().parseToAst(input)
+
+    val expectedTrimmed = expected
+        .split("\n")
+        .map { line -> line.trim() }
+        .filter { line -> line.isNotEmpty() }
+        .joinToString(separator = "\n")
+
+    val result = KotlinSerializer().serialize(ast)
+    result shouldBe expectedTrimmed
 }

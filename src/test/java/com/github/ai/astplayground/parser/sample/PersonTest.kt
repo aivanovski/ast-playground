@@ -29,7 +29,7 @@ import com.github.ai.astplayground.transpiler.model.InitializerBlock
 import com.github.ai.astplayground.transpiler.model.Operator
 import org.junit.jupiter.api.Test
 
-class SampleTest {
+class PersonTest {
 
     @Test
     fun `should work with class`() {
