@@ -1,54 +1,55 @@
 package com.github.ai.astplayground.transpiler.serializer
 
-import com.github.ai.astplayground.transpiler.model.CodeBlock
-import com.github.ai.astplayground.transpiler.model.Constructor
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Field
-import com.github.ai.astplayground.transpiler.model.InitializerBlock
-import com.github.ai.astplayground.transpiler.model.JavaAstNode
-import com.github.ai.astplayground.transpiler.model.Method
-import com.github.ai.astplayground.transpiler.model.Modifier
-import com.github.ai.astplayground.transpiler.model.Parameter
-import com.github.ai.astplayground.transpiler.model.TypeReference
-import com.github.ai.astplayground.transpiler.model.TypeReferenceKind
-import com.github.ai.astplayground.transpiler.model.isPrimitive
-import com.github.ai.astplayground.transpiler.model.isPrimitiveBoolean
-import com.github.ai.astplayground.transpiler.model.isPrimitiveByte
-import com.github.ai.astplayground.transpiler.model.isPrimitiveChar
-import com.github.ai.astplayground.transpiler.model.isPrimitiveDouble
-import com.github.ai.astplayground.transpiler.model.isPrimitiveFloat
-import com.github.ai.astplayground.transpiler.model.isPrimitiveInt
-import com.github.ai.astplayground.transpiler.model.isPrimitiveLong
+import com.github.ai.astplayground.transpiler.model.exception.AstSerializationException
+import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
+import com.github.ai.astplayground.transpiler.parser.model.Constructor
+import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.Field
+import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.Method
+import com.github.ai.astplayground.transpiler.parser.model.Modifier
+import com.github.ai.astplayground.transpiler.parser.model.Parameter
+import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitive
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveBoolean
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveByte
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveChar
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveDouble
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveFloat
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveInt
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveLong
+import com.github.ai.astplayground.transpiler.parser.model.Operator
+import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
 
-class KotlinSerializer : AstSerializer {
+class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
-    override fun serialize(nodes: List<JavaAstNode>): String {
+    override fun serialize(nodes: List<KotlinAstNode>): String {
         val content = SourceCodeBuilder()
 
         for (node in nodes) {
             when (node) {
-                is JavaAstNode.Package -> content.serialize(node)
-                is JavaAstNode.Import -> content.serialize(node)
-                is JavaAstNode.Class -> content.serialize(node)
-                else -> throw NotImplementedError("Unhandled node: $node")
+                is KotlinAstNode.Package -> content.serialize(node)
+                is KotlinAstNode.Import -> content.serialize(node)
+                is KotlinAstNode.Class -> content.serialize(node)
             }
         }
 
         return content.build()
     }
 
-    private fun SourceCodeBuilder.serialize(node: JavaAstNode.Package) {
+    private fun SourceCodeBuilder.serialize(node: KotlinAstNode.Package) {
         appendLine("package ${node.name}")
     }
 
-    private fun SourceCodeBuilder.serialize(node: JavaAstNode.Import) {
+    private fun SourceCodeBuilder.serialize(node: KotlinAstNode.Import) {
         val staticKeyword = if (node.isStatic) "static " else ""
         val importName =
             if (node.isAsterisk && !node.name.endsWith(".*")) "${node.name}.*" else node.name
         appendLine("import $staticKeyword$importName")
     }
 
-    private fun SourceCodeBuilder.serialize(classNode: JavaAstNode.Class) {
+    private fun SourceCodeBuilder.serialize(classNode: KotlinAstNode.Class) {
         appendLine("class ${classNode.name}")
 
         val hasBody =
@@ -249,7 +250,7 @@ class KotlinSerializer : AstSerializer {
             is Expression.ConstructorInvocation -> formatConstructorInvocation(expression)
             is Expression.DeclareVariable -> formatVariableDeclaration(expression)
             is Expression.Return -> "return ${formatExpression(expression.expression)}"
-            else -> throw NotImplementedError("Not implemented expression: $expression")
+            else -> throw AstSerializationException("Not implemented expression", expression)
         }
     }
 
@@ -320,18 +321,18 @@ class KotlinSerializer : AstSerializer {
         return "var ${expression.name}: $type = $value"
     }
 
-    private fun formatOperator(operator: com.github.ai.astplayground.transpiler.model.Operator): String {
+    private fun formatOperator(operator: Operator): String {
         return when (operator) {
-            com.github.ai.astplayground.transpiler.model.Operator.PLUS -> "+"
-            com.github.ai.astplayground.transpiler.model.Operator.MINUS -> "-"
-            com.github.ai.astplayground.transpiler.model.Operator.MULTIPLY -> "*"
-            com.github.ai.astplayground.transpiler.model.Operator.DIVIDE -> "/"
-            com.github.ai.astplayground.transpiler.model.Operator.LESS_THAN -> "<"
-            com.github.ai.astplayground.transpiler.model.Operator.GREATER_THAN -> ">"
-            com.github.ai.astplayground.transpiler.model.Operator.EQUALS -> "=="
-            com.github.ai.astplayground.transpiler.model.Operator.NOT_EQUALS -> "!="
-            com.github.ai.astplayground.transpiler.model.Operator.AND -> "&&"
-            com.github.ai.astplayground.transpiler.model.Operator.OR -> "||"
+            Operator.PLUS -> "+"
+            Operator.MINUS -> "-"
+            Operator.MULTIPLY -> "*"
+            Operator.DIVIDE -> "/"
+            Operator.LESS_THAN -> "<"
+            Operator.GREATER_THAN -> ">"
+            Operator.EQUALS -> "=="
+            Operator.NOT_EQUALS -> "!="
+            Operator.AND -> "&&"
+            Operator.OR -> "||"
         }
     }
 

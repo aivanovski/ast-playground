@@ -1,7 +1,7 @@
 package com.github.ai.astplayground.astDsl
 
-import com.github.ai.astplayground.transpiler.model.TypeReference
-import com.github.ai.astplayground.transpiler.model.TypeReferenceKind
+import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 
 object TypeReferenceFactory {
 

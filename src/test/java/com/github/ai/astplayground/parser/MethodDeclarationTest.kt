@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.Modifiers.static
 import com.github.ai.astplayground.astDsl.ParametersFactory.int
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory
@@ -27,7 +27,7 @@ class MethodDeclarationTest {
                     }
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     void_method("m0")
                     method("m1", returns = "Object".asType())

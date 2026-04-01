@@ -1,22 +1,22 @@
 package com.github.ai.astplayground.astDsl
 
 import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
-import com.github.ai.astplayground.transpiler.model.CodeBlock
-import com.github.ai.astplayground.transpiler.model.Constructor
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Field
-import com.github.ai.astplayground.transpiler.model.InitializerBlock
-import com.github.ai.astplayground.transpiler.model.JavaAstNode
-import com.github.ai.astplayground.transpiler.model.JavaAstNode.TypeDeclaration
-import com.github.ai.astplayground.transpiler.model.Method
-import com.github.ai.astplayground.transpiler.model.Modifier
-import com.github.ai.astplayground.transpiler.model.Parameter
-import com.github.ai.astplayground.transpiler.model.TypeReference
-import com.github.ai.astplayground.transpiler.model.TypeReferenceKind
-import com.github.ai.astplayground.transpiler.model.Variable
+import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
+import com.github.ai.astplayground.transpiler.parser.model.Constructor
+import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.Field
+import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
+import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode.TypeDeclaration
+import com.github.ai.astplayground.transpiler.parser.model.Method
+import com.github.ai.astplayground.transpiler.parser.model.Modifier
+import com.github.ai.astplayground.transpiler.parser.model.Parameter
+import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
+import com.github.ai.astplayground.transpiler.parser.model.Variable
 
 internal object AstBuilderDsl {
-    fun buildAst(content: AstBuilder.() -> Unit): List<JavaAstNode> {
+    fun javaAst(content: AstBuilder.() -> Unit): List<JavaAstNode> {
         val builder = AstBuilder()
             .apply {
                 content.invoke(this)

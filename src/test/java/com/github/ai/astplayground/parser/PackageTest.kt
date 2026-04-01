@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.parseAndAssert
 import org.junit.jupiter.api.Test
 
@@ -12,7 +12,7 @@ class PackageTest {
             input = """
                 package com.example.test;
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `package`("com.example.test")
             }
         )
@@ -22,7 +22,7 @@ class PackageTest {
     fun `should support default package`() {
         parseAndAssert(
             input = "",
-            expected = buildAst {
+            expected = javaAst {
 
             }
         )

@@ -1,21 +1,21 @@
 package com.github.ai.astplayground.serializer
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.astDsl.Modifiers.static
 import com.github.ai.astplayground.astDsl.ParametersFactory.int
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
-import com.github.ai.astplayground.serializeAndAssert
-import com.github.ai.astplayground.transpiler.model.Expression.Null
+import com.github.ai.astplayground.transpileAndAssert
+import com.github.ai.astplayground.transpiler.parser.model.Expression.Null
 import org.junit.jupiter.api.Test
 
 class MethodDeclarationTest {
 
     @Test
     fun `should support method declaration`() {
-        serializeAndAssert(
-            input = buildAst {
+        transpileAndAssert(
+            input = javaAst {
                 `class`("Test") {
                     void_method("m0")
                     method("m1", returns = "Object".asType()) {

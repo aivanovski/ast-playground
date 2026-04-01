@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.serializer
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.int
 import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
 import com.github.ai.astplayground.astDsl.ExpressionFactory.string
@@ -13,17 +13,17 @@ import com.github.ai.astplayground.astDsl.TypeReferenceFactory
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.parameterizedWith
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.void
 import com.github.ai.astplayground.astDsl.VariableFactory.asIntVariable
-import com.github.ai.astplayground.serializeAndAssert
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Operator
+import com.github.ai.astplayground.transpileAndAssert
+import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.Operator
 import org.junit.jupiter.api.Test
 
 class ForLoopTest {
 
     @Test
     fun `should support for loop`() {
-        serializeAndAssert(
-            input = buildAst {
+        transpileAndAssert(
+            input = javaAst {
                 `class`("Test") {
                     method("m0", returns = void()) {
                         call(
@@ -73,8 +73,8 @@ class ForLoopTest {
 
     @Test
     fun `should support for each loop`() {
-        serializeAndAssert(
-            input = buildAst {
+        transpileAndAssert(
+            input = javaAst {
                 import("java.util.List")
 
                 `class`("Test") {

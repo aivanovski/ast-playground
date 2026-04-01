@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser.sample
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory
 import com.github.ai.astplayground.astDsl.ExpressionFactory.equal
 import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
@@ -23,10 +23,10 @@ import com.github.ai.astplayground.astDsl.TypeReferenceFactory.string
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.void
 import com.github.ai.astplayground.astDsl.VariableFactory.asVariableOf
 import com.github.ai.astplayground.parseAndAssert
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Expression.Null
-import com.github.ai.astplayground.transpiler.model.InitializerBlock
-import com.github.ai.astplayground.transpiler.model.Operator
+import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.Expression.Null
+import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.Operator
 import org.junit.jupiter.api.Test
 
 class PersonTest {
@@ -86,7 +86,7 @@ class PersonTest {
                     }
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 import("java.util.ArrayList")
                 import("java.util.List")
 

@@ -1,4 +1,4 @@
-package com.github.ai.astplayground.transpiler.model
+package com.github.ai.astplayground.transpiler.parser.model
 
 fun TypeReference.isPrimitiveByte() =
     name == "byte" && kind == TypeReferenceKind.PRIMITIVE

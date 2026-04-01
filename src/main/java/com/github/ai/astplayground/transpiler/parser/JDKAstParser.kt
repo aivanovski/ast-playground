@@ -1,24 +1,24 @@
 package com.github.ai.astplayground.transpiler.parser
 
-import com.github.ai.astplayground.transpiler.model.CodeBlock
-import com.github.ai.astplayground.transpiler.model.Constructor
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Field
-import com.github.ai.astplayground.transpiler.model.InitializerBlock
-import com.github.ai.astplayground.transpiler.model.JavaAstNode
-import com.github.ai.astplayground.transpiler.model.Method
-import com.github.ai.astplayground.transpiler.model.Modifier
-import com.github.ai.astplayground.transpiler.model.Operator
-import com.github.ai.astplayground.transpiler.model.Parameter
-import com.github.ai.astplayground.transpiler.model.TypeReference
-import com.github.ai.astplayground.transpiler.model.TypeReferenceKind
-import com.github.ai.astplayground.transpiler.model.exception.InvalidAstTreeNodeException
-import com.github.ai.astplayground.transpiler.model.isPrimitiveByte
-import com.github.ai.astplayground.transpiler.model.isPrimitiveChar
-import com.github.ai.astplayground.transpiler.model.isPrimitiveDouble
-import com.github.ai.astplayground.transpiler.model.isPrimitiveFloat
-import com.github.ai.astplayground.transpiler.model.isPrimitiveInt
-import com.github.ai.astplayground.transpiler.model.isPrimitiveLong
+import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
+import com.github.ai.astplayground.transpiler.parser.model.Constructor
+import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.Field
+import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
+import com.github.ai.astplayground.transpiler.parser.model.Method
+import com.github.ai.astplayground.transpiler.parser.model.Modifier
+import com.github.ai.astplayground.transpiler.parser.model.Operator
+import com.github.ai.astplayground.transpiler.parser.model.Parameter
+import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
+import com.github.ai.astplayground.transpiler.model.exception.AstParsingException
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveByte
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveChar
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveDouble
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveFloat
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveInt
+import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveLong
 import com.sun.source.tree.AnnotatedTypeTree
 import com.sun.source.tree.AssignmentTree
 import com.sun.source.tree.BinaryTree
@@ -127,7 +127,7 @@ class JDKAstParser : AstParser {
     private fun ClassTree.toTypeDeclaration(): JavaAstNode.TypeDeclaration {
         return when (kind) {
             Tree.Kind.CLASS -> this.toClassNode()
-            else -> throw InvalidAstTreeNodeException("Invalid kind", this)
+            else -> throw AstParsingException("Invalid kind", this)
         }
     }
 
@@ -239,7 +239,7 @@ class JDKAstParser : AstParser {
 
         return typedLiteral
             ?: literalByValue
-            ?: throw InvalidAstTreeNodeException("Invalid literal", literal)
+            ?: throw AstParsingException("Invalid literal", literal)
     }
 
     private fun VariableTree.toParameter(): Parameter {
@@ -359,7 +359,7 @@ class JDKAstParser : AstParser {
                 convertStatements(statement.statements).orEmpty()
             }
 
-            else -> throw InvalidAstTreeNodeException("Invalid statement", statement)
+            else -> throw AstParsingException("Invalid statement", statement)
         }
     }
 
@@ -433,7 +433,7 @@ class JDKAstParser : AstParser {
                 )
             }
 
-            else -> throw InvalidAstTreeNodeException("Invalid expression", expression)
+            else -> throw AstParsingException("Invalid expression", expression)
         }
     }
 
@@ -468,7 +468,7 @@ class JDKAstParser : AstParser {
                 javax.lang.model.element.Modifier.STATIC -> Modifier.STATIC
                 javax.lang.model.element.Modifier.FINAL -> Modifier.FINAL
                 javax.lang.model.element.Modifier.ABSTRACT -> Modifier.ABSTRACT
-                else -> throw InvalidAstTreeNodeException("Invalid modifier", modifier)
+                else -> throw AstParsingException("Invalid modifier", modifier)
             }
         }.toSet()
     }
@@ -486,7 +486,7 @@ class JDKAstParser : AstParser {
             "NOT_EQUAL_TO" -> Operator.NOT_EQUALS
             "CONDITIONAL_AND" -> Operator.AND
             "CONDITIONAL_OR" -> Operator.OR
-            else -> throw InvalidAstTreeNodeException("Invalid operator", this)
+            else -> throw AstParsingException("Invalid operator", this)
         }
     }
 

@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.astDsl.ExpressionFactory.typedIdentifier
 import com.github.ai.astplayground.astDsl.FieldFactory.boolean
@@ -10,7 +10,6 @@ import com.github.ai.astplayground.astDsl.FieldFactory.double
 import com.github.ai.astplayground.astDsl.FieldFactory.float
 import com.github.ai.astplayground.astDsl.FieldFactory.int
 import com.github.ai.astplayground.astDsl.FieldFactory.long
-import com.github.ai.astplayground.astDsl.FieldFactory.string
 import com.github.ai.astplayground.astDsl.FieldFactory.variable
 import com.github.ai.astplayground.astDsl.IdentifierFactory.invokeConstructor
 import com.github.ai.astplayground.astDsl.InitializerFactory
@@ -62,7 +61,7 @@ class FieldDeclarationTest {
                     double d5 = 0.6D;
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     field(boolean("bl"))
                     field(boolean("bl0", true))
@@ -115,7 +114,7 @@ class FieldDeclarationTest {
                     StringBuilder sb = new StringBuilder("cde");
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     field(variable("o", "Object".asType()))
                     field(variable("o0", "Object".asType()))
@@ -144,7 +143,7 @@ class FieldDeclarationTest {
                     List<String> values = new ArrayList<String>();
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     field(
                         variable(

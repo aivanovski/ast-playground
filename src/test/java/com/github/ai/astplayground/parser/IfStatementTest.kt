@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.and
 import com.github.ai.astplayground.astDsl.ExpressionFactory.equal
 import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
@@ -37,7 +37,7 @@ class IfStatementTest {
                     }
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     void_method("m0", ParametersFactory.int("i")) {
                         `if`(true.literal()) {

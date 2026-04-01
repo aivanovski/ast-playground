@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.serializer
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.and
 import com.github.ai.astplayground.astDsl.ExpressionFactory.equal
 import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
@@ -11,15 +11,15 @@ import com.github.ai.astplayground.astDsl.IdentifierFactory.asIdentifier
 import com.github.ai.astplayground.astDsl.IdentifierFactory.field
 import com.github.ai.astplayground.astDsl.IdentifierFactory.method
 import com.github.ai.astplayground.astDsl.ParametersFactory
-import com.github.ai.astplayground.serializeAndAssert
+import com.github.ai.astplayground.transpileAndAssert
 import org.junit.jupiter.api.Test
 
 class IfStatementTest {
 
     @Test
     fun `should support if statements`() {
-        serializeAndAssert(
-            input = buildAst {
+        transpileAndAssert(
+            input = javaAst {
                 `class`("Test") {
                     void_method("m0", ParametersFactory.int("i")) {
                         `if`(true.literal()) {

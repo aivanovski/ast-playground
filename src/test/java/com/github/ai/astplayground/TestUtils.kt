@@ -1,8 +1,9 @@
 package com.github.ai.astplayground
 
 import com.github.ai.astplayground.transpiler.parser.JDKAstParser
-import com.github.ai.astplayground.transpiler.model.JavaAstNode
+import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
 import com.github.ai.astplayground.transpiler.serializer.KotlinSerializer
+import com.github.ai.astplayground.transpiler.transformer.JavaToKotlinTransformer
 import io.kotest.matchers.shouldBe
 import kotlin.text.split
 
@@ -14,32 +15,30 @@ fun parseAndAssert(
     parseResult shouldBe expected
 }
 
-fun serializeAndAssert(
+fun transpileAndAssert(
     input: List<JavaAstNode>,
     expected: String
 ) {
-    val expectedTrimmed = expected
-        .split("\n")
-        .map { line -> line.trim() }
-        .filter { line -> line.isNotEmpty() }
-        .joinToString(separator = "\n")
-
-    val serializationResult = KotlinSerializer().serialize(input)
-    serializationResult shouldBe expectedTrimmed
+    val kotlinAst = JavaToKotlinTransformer().transform(input)
+    val serializationResult = KotlinSerializer().serialize(kotlinAst)
+    serializationResult shouldBe expected.trimCode()
 }
 
 fun transpileAndAssert(
     input: String,
     expected: String
 ) {
-    val ast = JDKAstParser().parseToAst(input)
+    val javaAst = JDKAstParser().parseToAst(input)
 
-    val expectedTrimmed = expected
-        .split("\n")
+    val kotlinAst = JavaToKotlinTransformer().transform(javaAst)
+    val result = KotlinSerializer().serialize(kotlinAst)
+
+    result shouldBe expected.trimCode()
+}
+
+private fun String.trimCode(): String {
+    return this.split("\n")
         .map { line -> line.trim() }
         .filter { line -> line.isNotEmpty() }
         .joinToString(separator = "\n")
-
-    val result = KotlinSerializer().serialize(ast)
-    result shouldBe expectedTrimmed
 }

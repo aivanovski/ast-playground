@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.serializer
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.astDsl.FieldFactory.boolean
 import com.github.ai.astplayground.astDsl.FieldFactory.byte
@@ -14,15 +14,15 @@ import com.github.ai.astplayground.astDsl.FieldFactory.variable
 import com.github.ai.astplayground.astDsl.IdentifierFactory.invokeConstructor
 import com.github.ai.astplayground.astDsl.InitializerFactory.initializer
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
-import com.github.ai.astplayground.serializeAndAssert
+import com.github.ai.astplayground.transpileAndAssert
 import org.junit.jupiter.api.Test
 
 class FieldDeclarationTest {
 
     @Test
     fun `should support primitive declarations`() {
-        serializeAndAssert(
-            input = buildAst {
+        transpileAndAssert(
+            input = javaAst {
                 `class`("Test") {
                     field(boolean("bl"))
                     field(boolean("bl0", true))
@@ -83,8 +83,8 @@ class FieldDeclarationTest {
 
     @Test
     fun `should support typed declarations`() {
-        serializeAndAssert(
-            input = buildAst {
+        transpileAndAssert(
+            input = javaAst {
                 `class`("Test") {
                     field(variable("o", "Object".asType()))
                     field(variable("s", "String".asType()))

@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.int
 import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
 import com.github.ai.astplayground.astDsl.ExpressionFactory.string
@@ -23,7 +23,7 @@ class MethodInvocationTest {
                     }
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     method("m0", returns = void()) {
                         call("System" field "out" method "println" invoke string("Hello"))

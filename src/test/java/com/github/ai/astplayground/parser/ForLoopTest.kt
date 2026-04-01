@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.int
 import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
 import com.github.ai.astplayground.astDsl.ExpressionFactory.string
@@ -14,8 +14,8 @@ import com.github.ai.astplayground.astDsl.TypeReferenceFactory.parameterizedWith
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.void
 import com.github.ai.astplayground.astDsl.VariableFactory.asIntVariable
 import com.github.ai.astplayground.parseAndAssert
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Operator
+import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.Operator
 import org.junit.jupiter.api.Test
 
 class ForLoopTest {
@@ -32,7 +32,7 @@ class ForLoopTest {
                     }
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     method("m0", returns = void()) {
                         call(
@@ -82,7 +82,7 @@ class ForLoopTest {
                     }
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 import("java.util.List")
 
                 `class`("Test") {

@@ -1,7 +1,7 @@
 package com.github.ai.astplayground.astDsl
 
-import com.github.ai.astplayground.transpiler.model.Expression
-import com.github.ai.astplayground.transpiler.model.Operator
+import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.Operator
 
 object ExpressionFactory {
 

@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.parser
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.FieldFactory
 import com.github.ai.astplayground.astDsl.IdentifierFactory.field
 import com.github.ai.astplayground.astDsl.ParametersFactory
@@ -21,7 +21,7 @@ class AssignmentTest {
                     }
                 }
             """,
-            expected = buildAst {
+            expected = javaAst {
                 `class`("Test") {
                     field(FieldFactory.int("i0"))
 

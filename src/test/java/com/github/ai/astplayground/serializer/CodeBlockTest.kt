@@ -1,6 +1,6 @@
 package com.github.ai.astplayground.serializer
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.buildAst
+import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
 import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
 import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
 import com.github.ai.astplayground.astDsl.ExpressionFactory.string
@@ -14,16 +14,16 @@ import com.github.ai.astplayground.astDsl.ParametersFactory.int
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.void
-import com.github.ai.astplayground.serializeAndAssert
-import com.github.ai.astplayground.transpiler.model.Expression
+import com.github.ai.astplayground.transpileAndAssert
+import com.github.ai.astplayground.transpiler.parser.model.Expression
 import org.junit.jupiter.api.Test
 
 class CodeBlockTest {
 
     @Test
     fun `should support method body`() {
-        serializeAndAssert(
-            input = buildAst {
+        transpileAndAssert(
+            input = javaAst {
                 `class`("Test") {
                     method("m0", returns = void()) {
                         call("System" field "out" method "println" invoke string("Hello"))

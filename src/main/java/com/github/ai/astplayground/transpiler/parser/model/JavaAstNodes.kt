@@ -1,4 +1,4 @@
-package com.github.ai.astplayground.transpiler.model
+package com.github.ai.astplayground.transpiler.parser.model
 
 sealed interface JavaAstNode {
 
@@ -180,13 +180,6 @@ enum class TypeReferenceKind {
     DECLARED,
     VOID,
 }
-
-//enum class TypeKind {
-//    CLASS,
-//    INTERFACE,
-//    ENUM,
-//    ANNOTATION,
-//}
 
 enum class Modifier {
     PUBLIC,
