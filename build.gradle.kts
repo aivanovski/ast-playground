@@ -1,8 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import org.gradle.api.JavaVersion
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlinJvm)
@@ -16,6 +13,14 @@ version = libs.versions.appVersion.get()
 repositories {
     mavenCentral()
     maven("https://jitpack.io")
+}
+
+sourceSets {
+    named("main") {
+        java {
+            exclude("org/jetbrains/kotlin/nj2k/**")
+        }
+    }
 }
 
 tasks.test {
