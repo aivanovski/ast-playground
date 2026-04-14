@@ -21,7 +21,9 @@ import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveLong
 import com.github.ai.astplayground.transpiler.parser.model.Operator
 import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocation
 import com.github.ai.astplayground.transpiler.parser.model.isLiteral
+import com.github.ai.astplayground.transpiler.serializer.model.KConstructor
 import com.github.ai.astplayground.transpiler.serializer.model.KField
+import com.github.ai.astplayground.transpiler.serializer.model.KParameter
 import com.github.ai.astplayground.transpiler.serializer.model.KTypeReference
 import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
 import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveBoolean
@@ -114,7 +116,7 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         append("var $name: $type = $value")
     }
 
-    private fun SourceCodeBuilder.serialize(constructor: Constructor) {
+    private fun SourceCodeBuilder.serialize(constructor: KConstructor) {
         val parameters = constructor.parameters
             .map { parameter -> formatParameter(parameter) }
             .joinToString(separator = ", ")
@@ -163,6 +165,13 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
+    private fun formatParameter(parameter: KParameter): String {
+        val name = parameter.name
+        val type = formatTypeName(parameter.type)
+        return "$name: $type"
+    }
+
+    @Deprecated("")
     private fun formatParameter(parameter: Parameter): String {
         val name = parameter.name
         val isNullable = isTypeNullable(parameter.type)

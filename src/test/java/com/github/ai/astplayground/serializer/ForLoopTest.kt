@@ -67,7 +67,7 @@ class ForLoopTest {
                         }
                     }
                 }
-            """.trimIndent()
+            """
         )
     }
 
@@ -104,7 +104,7 @@ class ForLoopTest {
                         }
                     }
                 }
-            """.trimIndent()
+            """
         )
     }
 }

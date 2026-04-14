@@ -1,62 +1,34 @@
 package com.github.ai.astplayground.serializer
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
-import com.github.ai.astplayground.astDsl.ExpressionFactory.invoke
-import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
-import com.github.ai.astplayground.astDsl.ExpressionFactory.string
-import com.github.ai.astplayground.astDsl.IdentifierFactory.asIdentifier
-import com.github.ai.astplayground.astDsl.IdentifierFactory.field
-import com.github.ai.astplayground.astDsl.IdentifierFactory.method
-import com.github.ai.astplayground.astDsl.IdentifierFactory.plus
-import com.github.ai.astplayground.astDsl.InitializerFactory
-import com.github.ai.astplayground.astDsl.InitializerFactory.iliteral
-import com.github.ai.astplayground.astDsl.ParametersFactory.int
-import com.github.ai.astplayground.astDsl.TypeReferenceFactory
-import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
-import com.github.ai.astplayground.astDsl.TypeReferenceFactory.void
-import com.github.ai.astplayground.transpileAndAssert
-import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpileJavaAndAssert
 import org.junit.jupiter.api.Test
 
 class CodeBlockTest {
 
     @Test
     fun `should support method body`() {
-        transpileAndAssert(
-            input = javaAst {
-                `class`("Test") {
-                    method("m0", returns = void()) {
-                        call("System" field "out" method "println" invoke string("Hello"))
+        transpileJavaAndAssert(
+            input = """
+                class Test {
+                    void m0() {
+                        System.out.println("Hello");
                     }
-
-                    method("m1", returns = TypeReferenceFactory.string()) {
-                        `return`(string("abc123"))
+                    String m1() {
+                        return "abc123";
                     }
-
-                    method("m2", returns = TypeReferenceFactory.string()) {
-                        variable("s0", "String".asType(), "abc".iliteral())
-                        variable("s1", "String".asType(), "123".iliteral())
-                        `return`("s0".asIdentifier() plus "s1".asIdentifier())
+                    String m2() {
+                        String s0 = "abc";
+                        String s1 = "123";
+                        return s0 + s1;
                     }
-
-                    method("sum", int("a"), int("b"), returns = TypeReferenceFactory.int()) {
-                        `return`("a".asIdentifier() plus "b".asIdentifier())
+                    int sum(int a, int b) {
+                        return a + b;
                     }
-
-                    method("m3", returns = void()) {
-                        variable(
-                            "i",
-                            TypeReferenceFactory.int(),
-                            InitializerFactory.expression(
-                                Expression.MethodInvocation(
-                                    arguments = listOf(1.literal(), 2.literal()),
-                                    method = "sum".asIdentifier()
-                                )
-                            )
-                        )
+                    void m3() {
+                        int i = sum(1, 2);
                     }
                 }
-            },
+            """,
             expected = """
                 class Test {
                     fun m0() {
@@ -77,7 +49,7 @@ class CodeBlockTest {
                         var i: Int = sum(1, 2)
                     }
                 }
-            """.trimIndent()
+            """
         )
     }
 }

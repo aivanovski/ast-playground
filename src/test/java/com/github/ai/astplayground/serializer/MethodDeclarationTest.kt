@@ -38,7 +38,7 @@ class MethodDeclarationTest {
                         fun sm0() {}
                     }
                 }
-            """.trimIndent()
+            """
         )
     }
 }

@@ -30,7 +30,7 @@ sealed interface KotlinAstNode {
         override val name: String,
         override val modifiers: Set<Modifier>,
         val fields: List<KField>,
-        val constructors: List<Constructor>,
+        val constructors: List<KConstructor>,
         val methods: List<Method>
     ) : TypeDeclaration
 }
@@ -54,4 +54,16 @@ data class KTypeReference(
     val isNullable: Boolean,
     val name: String,
     val typeArguments: List<KTypeReference> = emptyList()
+)
+
+data class KConstructor(
+    val modifiers: Set<Modifier>,
+    val parameters: List<KParameter>,
+    val body: CodeBlock
+)
+
+data class KParameter(
+    val name: String,
+    val type: KTypeReference,
+    val isVarArgs: Boolean,
 )

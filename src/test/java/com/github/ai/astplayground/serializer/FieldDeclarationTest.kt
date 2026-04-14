@@ -77,7 +77,7 @@ class FieldDeclarationTest {
                     String s0 = "abc";
                     StringBuilder sb = new StringBuilder("cde");
                 }
-            """.trimIndent(),
+            """,
             expected = """
                 class Test {
                     var o: Object? = null
@@ -85,7 +85,7 @@ class FieldDeclarationTest {
                     var s0: String = "abc"
                     var sb: StringBuilder = StringBuilder("cde")
                 }
-            """.trimIndent()
+            """
         )
     }
 }

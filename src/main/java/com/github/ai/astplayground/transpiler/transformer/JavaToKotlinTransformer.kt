@@ -1,16 +1,21 @@
 package com.github.ai.astplayground.transpiler.transformer
 
+import com.github.ai.astplayground.transpiler.parser.model.Constructor
 import com.github.ai.astplayground.transpiler.parser.model.Field
 import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
+import com.github.ai.astplayground.transpiler.parser.model.Parameter
 import com.github.ai.astplayground.transpiler.parser.model.TypeReference
 import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocation
 import com.github.ai.astplayground.transpiler.parser.model.isLiteral
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitive
+import com.github.ai.astplayground.transpiler.serializer.model.KConstructor
 import com.github.ai.astplayground.transpiler.serializer.model.KField
+import com.github.ai.astplayground.transpiler.serializer.model.KParameter
 import com.github.ai.astplayground.transpiler.serializer.model.KTypeReference
 import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
+import org.checkerframework.checker.units.qual.mol
 
 class JavaToKotlinTransformer {
 
@@ -31,11 +36,32 @@ class JavaToKotlinTransformer {
                     name = node.name,
                     modifiers = node.modifiers,
                     fields = node.fields.map { field -> transformField(field) },
-                    constructors = node.constructors,
+                    constructors = node.constructors.map { constructor ->
+                        transformConstructor(constructor)
+                    },
                     methods = node.methods
                 )
             }
         }
+    }
+
+    private fun transformConstructor(constructor: Constructor): KConstructor {
+        return KConstructor(
+            modifiers = constructor.modifiers,
+            parameters = constructor.parameters.map { parameter ->
+                transformParameter(parameter)
+            },
+            body = constructor.body
+        )
+
+    }
+
+    private fun transformParameter(parameter: Parameter): KParameter {
+        return KParameter(
+            name = parameter.name,
+            type = transformTypeReference(parameter.type, InitializerBlock.Empty),
+            isVarArgs = false
+        )
     }
 
     private fun transformField(field: Field): KField {
