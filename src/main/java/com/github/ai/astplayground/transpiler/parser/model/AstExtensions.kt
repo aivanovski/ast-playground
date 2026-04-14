@@ -29,3 +29,13 @@ fun TypeReference.isPrimitive() =
         || isPrimitiveLong()
         || isPrimitiveFloat()
         || isPrimitiveDouble()
+
+fun InitializerBlock.isLiteral(): Boolean {
+    return this is InitializerBlock.ExpressionBlock
+        && expression is Expression.Literal
+}
+
+fun InitializerBlock.isConstructorInvocation(): Boolean {
+    return this is InitializerBlock.ExpressionBlock
+        && expression is Expression.ConstructorInvocation
+}

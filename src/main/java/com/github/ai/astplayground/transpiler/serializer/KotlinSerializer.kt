@@ -4,7 +4,6 @@ import com.github.ai.astplayground.transpiler.model.exception.AstSerializationEx
 import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
 import com.github.ai.astplayground.transpiler.parser.model.Constructor
 import com.github.ai.astplayground.transpiler.parser.model.Expression
-import com.github.ai.astplayground.transpiler.parser.model.Field
 import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.Method
 import com.github.ai.astplayground.transpiler.parser.model.Modifier
@@ -20,7 +19,18 @@ import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveFloat
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveInt
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveLong
 import com.github.ai.astplayground.transpiler.parser.model.Operator
+import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocation
+import com.github.ai.astplayground.transpiler.parser.model.isLiteral
+import com.github.ai.astplayground.transpiler.serializer.model.KField
+import com.github.ai.astplayground.transpiler.serializer.model.KTypeReference
 import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
+import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveBoolean
+import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveByte
+import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveChar
+import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveDouble
+import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveFloat
+import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveInt
+import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveLong
 
 class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
@@ -91,14 +101,14 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
-    private fun SourceCodeBuilder.serialize(field: Field) {
-        val isNonNullable =
-            field.type.isPrimitive()
-                || field.initializer.isLiteral()
-                || field.initializer.isConstructorInvocation()
+    private fun SourceCodeBuilder.serialize(field: KField) {
+//        val isNonNullable =
+//            field.type.isPrimitive()
+//                || field.initializer.isLiteral()
+//                || field.initializer.isConstructorInvocation()
 
         val name = field.name
-        val type = formatType(field.type, isNullable = !isNonNullable)
+        val type = formatTypeName(field.type)
         val value = formatFieldValue(field.initializer, field.type)
 
         append("var $name: $type = $value")
@@ -129,7 +139,7 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         val name = method.name
         val isReturnUnit = (method.returnType.kind == TypeReferenceKind.VOID)
         val isReturnTypeNullable = !method.returnType.isPrimitive()
-        val returnType = formatType(method.returnType, isNullable = isReturnTypeNullable)
+        val returnType = formatTypeName(method.returnType, isNullable = isReturnTypeNullable)
 
         val parameters = method.parameters
             .map { parameter -> formatParameter(parameter) }
@@ -156,7 +166,7 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
     private fun formatParameter(parameter: Parameter): String {
         val name = parameter.name
         val isNullable = isTypeNullable(parameter.type)
-        val type = formatType(parameter.type, isNullable = isNullable)
+        val type = formatTypeName(parameter.type, isNullable = isNullable)
         return "$name: $type"
     }
 
@@ -164,6 +174,18 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         return !type.isPrimitive()
     }
 
+    private fun formatFieldValue(
+        initializer: InitializerBlock,
+        type: KTypeReference
+    ): String {
+        return if (initializer is InitializerBlock.ExpressionBlock) {
+            formatExpression(initializer.expression)
+        } else {
+            getDefaultValue(type)
+        }
+    }
+
+    @Deprecated("")
     private fun formatFieldValue(
         initializer: InitializerBlock,
         type: TypeReference
@@ -175,12 +197,33 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
-    private fun formatType(
+    private fun formatTypeName(
+        type: KTypeReference
+    ): String {
+        val typeArguments = type.typeArguments
+            .map { argType -> formatTypeName(argType) }
+
+        return buildString {
+            append(type.name)
+
+            if (typeArguments.isNotEmpty()) {
+                val types = typeArguments.joinToString(separator = ",")
+                append("<${types}>")
+            }
+
+            if (type.isNullable) {
+                append("?")
+            }
+        }
+    }
+
+    @Deprecated("")
+    private fun formatTypeName(
         type: TypeReference,
         isNullable: Boolean = true
     ): String {
         val argTypes = type.typeArguments
-            .map { argType -> formatType(argType, isNullable = false) }
+            .map { argType -> formatTypeName(argType, isNullable = false) }
             .joinToString(separator = ", ")
 
         val formattedType = when (type.kind) {
@@ -202,6 +245,20 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
+    private fun getDefaultValue(type: KTypeReference): String {
+        return when {
+            type.isPrimitiveBoolean() -> "false"
+            type.isPrimitiveByte() -> "0"
+            type.isPrimitiveChar() -> "0.toChar()"
+            type.isPrimitiveInt() -> "0"
+            type.isPrimitiveLong() -> "0L"
+            type.isPrimitiveFloat() -> "0F"
+            type.isPrimitiveDouble() -> "0.0"
+            else -> "null"
+        }
+    }
+
+    @Deprecated("")
     private fun getDefaultValue(type: TypeReference): String {
         return when {
             type.isPrimitiveBoolean() -> "false"
@@ -291,7 +348,7 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
     private fun formatForEachLoop(expression: Expression.ForEachLoop): String {
         val isNullable = !expression.variable.type.isPrimitive()
-        val variableType = formatType(expression.variable.type, isNullable = isNullable)
+        val variableType = formatTypeName(expression.variable.type, isNullable = isNullable)
         val iterable = formatExpression(expression.iterable)
         val body = formatExpression(expression.body)
         // TODO: check for the type of collection
@@ -316,7 +373,7 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
                 || expression.initializer.isLiteral()
                 || expression.initializer.isConstructorInvocation()
 
-        val type = formatType(expression.type, isNullable = !isNonNullable)
+        val type = formatTypeName(expression.type, isNullable = !isNonNullable)
         val value = formatFieldValue(expression.initializer, expression.type)
         return "var ${expression.name}: $type = $value"
     }
@@ -340,7 +397,7 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         return when (literal) {
             is Expression.BooleanLiteral -> literal.value.toString()
             is Expression.ByteLiteral -> literal.value.toString()
-            is Expression.CharLiteral -> "${literal.value.code}.toChar()"
+            is Expression.CharLiteral -> "'${literal.value}'"
             is Expression.IntLiteral -> literal.value.toString()
             is Expression.LongLiteral -> literal.value.toString() + "L"
             is Expression.FloatLiteral -> literal.value.toString() + "F"
@@ -352,16 +409,6 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
     private fun Method.isStatic(): Boolean {
         return Modifier.STATIC in modifiers
-    }
-
-    private fun InitializerBlock.isLiteral(): Boolean {
-        return this is InitializerBlock.ExpressionBlock
-            && expression is Expression.Literal
-    }
-
-    private fun InitializerBlock.isConstructorInvocation(): Boolean {
-        return this is InitializerBlock.ExpressionBlock
-            && expression is Expression.ConstructorInvocation
     }
 
     private fun CodeBlock.isNotEmpty(): Boolean {

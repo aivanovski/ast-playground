@@ -24,7 +24,7 @@ fun transpileAndAssert(
     serializationResult shouldBe expected.trimCode()
 }
 
-fun transpileAndAssert(
+fun transpileJavaAndAssert(
     input: String,
     expected: String
 ) {

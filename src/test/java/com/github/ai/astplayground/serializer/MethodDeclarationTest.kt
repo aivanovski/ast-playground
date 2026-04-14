@@ -1,33 +1,29 @@
 package com.github.ai.astplayground.serializer
 
-import com.github.ai.astplayground.astDsl.AstBuilderDsl.javaAst
-import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
-import com.github.ai.astplayground.astDsl.Modifiers.static
-import com.github.ai.astplayground.astDsl.ParametersFactory.int
-import com.github.ai.astplayground.astDsl.TypeReferenceFactory
-import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
-import com.github.ai.astplayground.transpileAndAssert
-import com.github.ai.astplayground.transpiler.parser.model.Expression.Null
+import com.github.ai.astplayground.transpileJavaAndAssert
 import org.junit.jupiter.api.Test
 
 class MethodDeclarationTest {
 
     @Test
     fun `should support method declaration`() {
-        transpileAndAssert(
-            input = javaAst {
-                `class`("Test") {
-                    void_method("m0")
-                    method("m1", returns = "Object".asType()) {
-                        `return`(Null)
+        transpileJavaAndAssert(
+            input = """
+                class Test {
+                    void m0() {
                     }
-                    void_method("m2", int("i0"), int("i1"))
-                    method("m3", returns = TypeReferenceFactory.int()) {
-                        `return`(1.literal())
+                    Object m1() {
+                        return null;
                     }
-                    void_method("sm0", modifiers = static())
+                    void m2(int i0, int i1) {
+                    }
+                    int m3() {
+                        return 1;
+                    }
+                    static void sm0() {
+                    }
                 }
-            },
+            """,
             expected = """
                 class Test {
                     fun m0() {}

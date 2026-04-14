@@ -1,9 +1,13 @@
 package com.github.ai.astplayground.transpiler.serializer.model
 
+import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
 import com.github.ai.astplayground.transpiler.parser.model.Constructor
 import com.github.ai.astplayground.transpiler.parser.model.Field
+import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.Method
 import com.github.ai.astplayground.transpiler.parser.model.Modifier
+import com.github.ai.astplayground.transpiler.parser.model.Parameter
+import com.github.ai.astplayground.transpiler.parser.model.TypeReference
 
 sealed interface KotlinAstNode {
 
@@ -25,8 +29,29 @@ sealed interface KotlinAstNode {
     data class Class(
         override val name: String,
         override val modifiers: Set<Modifier>,
-        val fields: List<Field>,
+        val fields: List<KField>,
         val constructors: List<Constructor>,
         val methods: List<Method>
     ) : TypeDeclaration
 }
+
+data class KMethod(
+    val name: String,
+    val modifiers: Set<Modifier>,
+    val returnType: TypeReference,
+    val parameters: List<Parameter>,
+    val body: CodeBlock
+)
+
+data class KField(
+    val name: String,
+    val modifiers: Set<Modifier>,
+    val type: KTypeReference,
+    val initializer: InitializerBlock,
+)
+
+data class KTypeReference(
+    val isNullable: Boolean,
+    val name: String,
+    val typeArguments: List<KTypeReference> = emptyList()
+)
