@@ -20,3 +20,6 @@ fun KTypeReference.isPrimitiveDouble() =
 
 fun KTypeReference.isPrimitiveBoolean() =
     name == "Boolean"
+
+fun KTypeReference.isUnit() =
+    name == "Unit"

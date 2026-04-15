@@ -88,4 +88,26 @@ class FieldDeclarationTest {
             """
         )
     }
+
+    @Test
+    fun `should resolve method calls`() {
+        transpileJavaAndAssert(
+            input = """
+                class Test {
+                    String s0 = m0();
+                    String m0() {
+                        return "abc123";
+                    }
+                }
+            """,
+            expected = """
+                class Test {
+                    var s0 = m0()
+                    fun m0(): String {
+                        return "abc123";
+                    }
+                }
+            """
+        )
+    }
 }

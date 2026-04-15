@@ -23,6 +23,7 @@ import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocati
 import com.github.ai.astplayground.transpiler.parser.model.isLiteral
 import com.github.ai.astplayground.transpiler.serializer.model.KConstructor
 import com.github.ai.astplayground.transpiler.serializer.model.KField
+import com.github.ai.astplayground.transpiler.serializer.model.KMethod
 import com.github.ai.astplayground.transpiler.serializer.model.KParameter
 import com.github.ai.astplayground.transpiler.serializer.model.KTypeReference
 import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
@@ -33,6 +34,7 @@ import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveDouble
 import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveFloat
 import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveInt
 import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveLong
+import com.github.ai.astplayground.transpiler.serializer.model.isUnit
 
 class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
@@ -70,9 +72,6 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
                 || classNode.methods.isNotEmpty())
 
         if (hasBody) {
-            val instanceMethods = classNode.methods.filter { method -> !method.isStatic() }
-            val staticMethods = classNode.methods.filter { method -> method.isStatic() }
-
             appendBlock {
                 for (field in classNode.fields) {
                     newLine()
@@ -84,19 +83,17 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
                     serialize(constructor)
                 }
 
-                for (method in instanceMethods) {
+                for (method in classNode.methods) {
                     newLine()
                     serialize(method)
                 }
 
-                if (staticMethods.isNotEmpty()) {
-                    newLine()
-                    append("companion object")
-                    appendBlock {
-                        for (method in staticMethods) {
-                            newLine()
-                            serialize(method)
-                        }
+                newLine()
+                append("companion object")
+                appendBlock {
+                    for (method in classNode.companionMethods) {
+                        newLine()
+                        serialize(method)
                     }
                 }
             }
@@ -137,11 +134,10 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
-    private fun SourceCodeBuilder.serialize(method: Method) {
+    private fun SourceCodeBuilder.serialize(method: KMethod) {
         val name = method.name
-        val isReturnUnit = (method.returnType.kind == TypeReferenceKind.VOID)
-        val isReturnTypeNullable = !method.returnType.isPrimitive()
-        val returnType = formatTypeName(method.returnType, isNullable = isReturnTypeNullable)
+        val isReturnUnit = method.returnType.isUnit()
+        val returnType = formatTypeName(method.returnType)
 
         val parameters = method.parameters
             .map { parameter -> formatParameter(parameter) }

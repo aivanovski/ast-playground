@@ -39,3 +39,7 @@ fun InitializerBlock.isConstructorInvocation(): Boolean {
     return this is InitializerBlock.ExpressionBlock
         && expression is Expression.ConstructorInvocation
 }
+
+fun Method.isStatic(): Boolean {
+    return Modifier.STATIC in modifiers
+}

@@ -31,17 +31,18 @@ sealed interface KotlinAstNode {
         override val modifiers: Set<Modifier>,
         val fields: List<KField>,
         val constructors: List<KConstructor>,
-        val methods: List<Method>
+        val methods: List<KMethod>,
+        val companionMethods: List<KMethod>
     ) : TypeDeclaration
-}
 
-data class KMethod(
-    val name: String,
-    val modifiers: Set<Modifier>,
-    val returnType: TypeReference,
-    val parameters: List<Parameter>,
-    val body: CodeBlock
-)
+    data class KMethod(
+        val name: String,
+        val modifiers: Set<Modifier>,
+        val returnType: KTypeReference,
+        val parameters: List<KParameter>,
+        val body: CodeBlock
+    ) : KotlinAstNode
+}
 
 data class KField(
     val name: String,

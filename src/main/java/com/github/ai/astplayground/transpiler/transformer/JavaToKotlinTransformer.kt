@@ -1,21 +1,24 @@
 package com.github.ai.astplayground.transpiler.transformer
 
+import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
 import com.github.ai.astplayground.transpiler.parser.model.Constructor
 import com.github.ai.astplayground.transpiler.parser.model.Field
 import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
+import com.github.ai.astplayground.transpiler.parser.model.Method
 import com.github.ai.astplayground.transpiler.parser.model.Parameter
 import com.github.ai.astplayground.transpiler.parser.model.TypeReference
 import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocation
 import com.github.ai.astplayground.transpiler.parser.model.isLiteral
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitive
+import com.github.ai.astplayground.transpiler.parser.model.isStatic
 import com.github.ai.astplayground.transpiler.serializer.model.KConstructor
 import com.github.ai.astplayground.transpiler.serializer.model.KField
+import com.github.ai.astplayground.transpiler.serializer.model.KMethod
 import com.github.ai.astplayground.transpiler.serializer.model.KParameter
 import com.github.ai.astplayground.transpiler.serializer.model.KTypeReference
 import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
-import org.checkerframework.checker.units.qual.mol
 
 class JavaToKotlinTransformer {
 
@@ -32,17 +35,35 @@ class JavaToKotlinTransformer {
                     isAsterisk = node.isAsterisk
                 )
 
-                is JavaAstNode.Class -> KotlinAstNode.Class(
-                    name = node.name,
-                    modifiers = node.modifiers,
-                    fields = node.fields.map { field -> transformField(field) },
-                    constructors = node.constructors.map { constructor ->
-                        transformConstructor(constructor)
-                    },
-                    methods = node.methods
-                )
+                is JavaAstNode.Class -> {
+                    val instanceMethods = node.methods.filter { method -> !method.isStatic() }
+                    val staticMethods = node.methods.filter { method -> method.isStatic() }
+
+                    KotlinAstNode.Class(
+                        name = node.name,
+                        modifiers = node.modifiers,
+                        fields = node.fields.map { field -> transformField(field) },
+                        constructors = node.constructors.map { constructor ->
+                            transformConstructor(constructor)
+                        },
+                        methods = instanceMethods.map { method -> transformMethod(method) },
+                        companionMethods = staticMethods.map { method -> transformMethod(method) }
+                    )
+                }
             }
         }
+    }
+
+    private fun transformMethod(method: Method): KMethod {
+        val returnType = transformTypeReference(method.returnType, InitializerBlock.Empty)
+
+        return KMethod(
+            name = method.name,
+            modifiers = method.modifiers,
+            returnType = returnType,
+            parameters = method.parameters.map { parameter -> transformParameter(parameter) },
+            body = method.body
+        )
     }
 
     private fun transformConstructor(constructor: Constructor): KConstructor {
