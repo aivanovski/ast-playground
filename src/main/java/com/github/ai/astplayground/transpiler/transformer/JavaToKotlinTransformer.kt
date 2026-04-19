@@ -1,102 +1,225 @@
 package com.github.ai.astplayground.transpiler.transformer
 
-import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
-import com.github.ai.astplayground.transpiler.parser.model.Constructor
-import com.github.ai.astplayground.transpiler.parser.model.Field
-import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.JCodeBlock
+import com.github.ai.astplayground.transpiler.parser.model.JConstructor
+import com.github.ai.astplayground.transpiler.parser.model.JExpression
+import com.github.ai.astplayground.transpiler.parser.model.JField
+import com.github.ai.astplayground.transpiler.parser.model.JInitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
-import com.github.ai.astplayground.transpiler.parser.model.Method
-import com.github.ai.astplayground.transpiler.parser.model.Parameter
-import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.JMethod
+import com.github.ai.astplayground.transpiler.parser.model.JParameter
+import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
 import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocation
 import com.github.ai.astplayground.transpiler.parser.model.isLiteral
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitive
 import com.github.ai.astplayground.transpiler.parser.model.isStatic
-import com.github.ai.astplayground.transpiler.serializer.model.KConstructor
-import com.github.ai.astplayground.transpiler.serializer.model.KField
-import com.github.ai.astplayground.transpiler.serializer.model.KMethod
-import com.github.ai.astplayground.transpiler.serializer.model.KParameter
-import com.github.ai.astplayground.transpiler.serializer.model.KTypeReference
-import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
+import com.github.ai.astplayground.transpiler.transformer.model.KCodeBlock
+import com.github.ai.astplayground.transpiler.transformer.model.KExpression
+import com.github.ai.astplayground.transpiler.transformer.model.KParameter
+import com.github.ai.astplayground.transpiler.transformer.model.KTypeReference
+import com.github.ai.astplayground.transpiler.transformer.model.KotlinAstNode
 
 class JavaToKotlinTransformer {
 
     fun transform(javaAst: List<JavaAstNode>): List<KotlinAstNode> {
-        return javaAst.map { node ->
-            when (node) {
-                is JavaAstNode.Package -> KotlinAstNode.Package(
-                    name = node.name
-                )
+        val kotlinAst = javaAst.map { node -> transformNode(node) }
+        return kotlinAst
+    }
 
-                is JavaAstNode.Import -> KotlinAstNode.Import(
-                    name = node.name,
-                    isStatic = node.isStatic,
-                    isAsterisk = node.isAsterisk
-                )
+    private fun KotlinAstNode.toIRNode(parent: IRNode?): IRNode {
+        val irNode = IRNode(
+            parent = parent,
+            node = this,
+            resolvedType = null,
+            nodes = mutableListOf()
+        )
 
-                is JavaAstNode.Class -> {
-                    val instanceMethods = node.methods.filter { method -> !method.isStatic() }
-                    val staticMethods = node.methods.filter { method -> method.isStatic() }
+        for (node in nodes) {
+            val irChildNode = node.toIRNode(parent = irNode)
+            irNode.nodes.add(irChildNode)
+        }
 
-                    KotlinAstNode.Class(
-                        name = node.name,
-                        modifiers = node.modifiers,
-                        fields = node.fields.map { field -> transformField(field) },
-                        constructors = node.constructors.map { constructor ->
-                            transformConstructor(constructor)
-                        },
-                        methods = instanceMethods.map { method -> transformMethod(method) },
-                        companionMethods = staticMethods.map { method -> transformMethod(method) }
-                    )
+        return irNode
+    }
+
+    private fun transformNode(node: JavaAstNode): KotlinAstNode {
+        return when (node) {
+            is JavaAstNode.Package -> KotlinAstNode.Package(
+                name = node.name
+            )
+
+            is JavaAstNode.Import -> KotlinAstNode.Import(
+                name = node.name,
+                isStatic = node.isStatic,
+                isAsterisk = node.isAsterisk
+            )
+
+            is JavaAstNode.JClass -> {
+                val instanceMethods = node.methods
+                    .filter { method -> !method.isStatic() }
+                    .map { method -> transformMethod(method) }
+
+                val staticMethods = node.methods
+                    .filter { method -> method.isStatic() }
+                    .map { method -> transformMethod(method) }
+
+                val companionNode = if (staticMethods.isNotEmpty()) {
+                    KotlinAstNode.CompanionObject(nodes = staticMethods)
+                } else {
+                    null
                 }
+
+                val fields = node.fields.map { field -> transformField(field) }
+                val constructors = node.constructors.map { constructor ->
+                    transformConstructor(constructor)
+                }
+
+                val nodes = buildList {
+                    addAll(fields)
+                    addAll(constructors)
+                    addAll(instanceMethods)
+
+                    if (companionNode != null) {
+                        add(companionNode)
+                    }
+                }
+
+                KotlinAstNode.KClass(
+                    name = node.name,
+                    modifiers = node.modifiers,
+                    nodes = nodes
+                )
             }
         }
     }
 
-    private fun transformMethod(method: Method): KMethod {
-        val returnType = transformTypeReference(method.returnType, InitializerBlock.Empty)
+    private fun transformMethod(method: JMethod): KotlinAstNode.KMethod {
+        val returnType = transformTypeReference(method.returnType, JInitializerBlock.Empty)
 
-        return KMethod(
+        return KotlinAstNode.KMethod(
             name = method.name,
             modifiers = method.modifiers,
             returnType = returnType,
             parameters = method.parameters.map { parameter -> transformParameter(parameter) },
-            body = method.body
+            body = transformCodeBlock(method.body)
         )
     }
 
-    private fun transformConstructor(constructor: Constructor): KConstructor {
-        return KConstructor(
+    private fun transformConstructor(constructor: JConstructor): KotlinAstNode.KConstructor {
+        return KotlinAstNode.KConstructor(
             modifiers = constructor.modifiers,
             parameters = constructor.parameters.map { parameter ->
                 transformParameter(parameter)
             },
-            body = constructor.body
+            body = transformCodeBlock(constructor.body)
         )
 
     }
 
-    private fun transformParameter(parameter: Parameter): KParameter {
+    private fun transformParameter(parameter: JParameter): KParameter {
         return KParameter(
             name = parameter.name,
-            type = transformTypeReference(parameter.type, InitializerBlock.Empty),
+            type = transformTypeReference(parameter.type, JInitializerBlock.Empty),
             isVarArgs = false
         )
     }
 
-    private fun transformField(field: Field): KField {
-        return KField(
+    private fun transformCodeBlock(block: JCodeBlock): KCodeBlock {
+        return when (block) {
+            JCodeBlock.Empty -> KCodeBlock.Empty
+            is JCodeBlock.Expressions -> KCodeBlock.Expressions(
+                expressions = block.expressions.map { expression -> transformExpression(expression) }
+            )
+        }
+    }
+
+    private fun transformField(field: JField): KotlinAstNode.KField {
+        return KotlinAstNode.KField(
             name = field.name,
             modifiers = field.modifiers,
             type = transformTypeReference(type = field.type, initializer = field.initializer),
-            initializer = field.initializer
+            initializer = transformInitializerBlock(field.initializer)
         )
     }
 
+    private fun transformInitializerBlock(block: JInitializerBlock): KCodeBlock {
+        return when (block) {
+            JInitializerBlock.Empty -> KCodeBlock.Empty
+            is JInitializerBlock.ExpressionBlock -> KCodeBlock.Expressions(
+                expressions = listOf(
+                    transformExpression(block.expression)
+                )
+            )
+        }
+    }
+
+    private fun transformExpressions(expressions: List<JExpression>): List<KExpression> {
+        return expressions.map { expression -> transformExpression(expression) }
+    }
+
+    private fun transformExpression(expression: JExpression): KExpression {
+        return when (expression) {
+            JExpression.Empty -> KExpression.Empty
+            is JExpression.Identifier -> KExpression.Identifier(expression.name)
+            is JExpression.Literal -> transformLiteral(expression)
+            is JExpression.Return -> KExpression.Return(transformExpression(expression.expression))
+            is JExpression.If -> KExpression.If(
+                condition = transformExpression(expression.condition),
+                thenExpression = transformExpression(expression.thenExpression),
+                elseExpression = transformExpression(expression.elseExpression)
+            )
+
+            is JExpression.ForEachLoop -> KExpression.ForEachLoop(
+                variable = KExpression.DeclareVariable(
+                    name = expression.variable.name,
+                    type = transformTypeReference(
+                        expression.variable.type,
+                        expression.variable.initializer
+                    ),
+                    initializer = transformInitializerBlock(expression.variable.initializer)
+                ),
+                iterable = transformExpression(expression.iterable),
+                body = transformExpression(expression.body)
+            )
+
+            is JExpression.MethodInvocation -> KExpression.MethodInvocation(
+                arguments = transformExpressions(expression.arguments),
+                method = transformExpression(expression.method)
+            )
+
+            is JExpression.FieldAccess -> KExpression.FieldAccess(
+                name = expression.name,
+                expression = transformExpression(expression.expression)
+            )
+
+            is JExpression.BinaryExpression -> KExpression.BinaryExpression(
+                operator = expression.operator,
+                lhs = transformExpression(expression.lhs),
+                rhs = transformExpression(expression.rhs)
+            )
+            // TODO: implement other cases
+            else -> throw NotImplementedError("Not implemented for expression: $expression")
+        }
+    }
+
+    private fun transformLiteral(literal: JExpression.Literal): KExpression.Literal {
+        return when (literal) {
+            JExpression.Null -> KExpression.Null
+            is JExpression.BooleanLiteral -> KExpression.BooleanLiteral(literal.value)
+            is JExpression.ByteLiteral -> KExpression.ByteLiteral(literal.value)
+            is JExpression.CharLiteral -> KExpression.CharLiteral(literal.value)
+            is JExpression.IntLiteral -> KExpression.IntLiteral(literal.value)
+            is JExpression.LongLiteral -> KExpression.LongLiteral(literal.value)
+            is JExpression.FloatLiteral -> KExpression.FloatLiteral(literal.value)
+            is JExpression.DoubleLiteral -> KExpression.DoubleLiteral(literal.value)
+            is JExpression.StringLiteral -> KExpression.StringLiteral(literal.value)
+        }
+    }
+
     private fun transformTypeReference(
-        type: TypeReference,
-        initializer: InitializerBlock
+        type: JTypeReference,
+        initializer: JInitializerBlock
     ): KTypeReference {
         val isNullable = !type.isPrimitive()
             && !initializer.isLiteral()
@@ -106,7 +229,7 @@ class JavaToKotlinTransformer {
             .map { argType ->
                 transformTypeReference(
                     argType,
-                    initializer = InitializerBlock.Empty
+                    initializer = JInitializerBlock.Empty
                 )
             }
 

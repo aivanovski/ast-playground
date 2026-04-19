@@ -1,14 +1,12 @@
 package com.github.ai.astplayground.transpiler.serializer
 
 import com.github.ai.astplayground.transpiler.model.exception.AstSerializationException
-import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
-import com.github.ai.astplayground.transpiler.parser.model.Constructor
-import com.github.ai.astplayground.transpiler.parser.model.Expression
-import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
-import com.github.ai.astplayground.transpiler.parser.model.Method
+import com.github.ai.astplayground.transpiler.parser.model.JCodeBlock
+import com.github.ai.astplayground.transpiler.parser.model.JInitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.JMethod
 import com.github.ai.astplayground.transpiler.parser.model.Modifier
-import com.github.ai.astplayground.transpiler.parser.model.Parameter
-import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.JParameter
+import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
 import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitive
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveBoolean
@@ -21,20 +19,20 @@ import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveLong
 import com.github.ai.astplayground.transpiler.parser.model.Operator
 import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocation
 import com.github.ai.astplayground.transpiler.parser.model.isLiteral
-import com.github.ai.astplayground.transpiler.serializer.model.KConstructor
-import com.github.ai.astplayground.transpiler.serializer.model.KField
-import com.github.ai.astplayground.transpiler.serializer.model.KMethod
-import com.github.ai.astplayground.transpiler.serializer.model.KParameter
-import com.github.ai.astplayground.transpiler.serializer.model.KTypeReference
-import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
-import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveBoolean
-import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveByte
-import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveChar
-import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveDouble
-import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveFloat
-import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveInt
-import com.github.ai.astplayground.transpiler.serializer.model.isPrimitiveLong
-import com.github.ai.astplayground.transpiler.serializer.model.isUnit
+import com.github.ai.astplayground.transpiler.transformer.model.KCodeBlock
+import com.github.ai.astplayground.transpiler.transformer.model.KExpression
+import com.github.ai.astplayground.transpiler.transformer.model.KParameter
+import com.github.ai.astplayground.transpiler.transformer.model.KTypeReference
+import com.github.ai.astplayground.transpiler.transformer.model.KotlinAstNode
+import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveBoolean
+import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveByte
+import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveChar
+import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveDouble
+import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveFloat
+import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveInt
+import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveLong
+import com.github.ai.astplayground.transpiler.transformer.model.isUnit
+import org.checkerframework.checker.units.qual.m
 
 class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
@@ -45,7 +43,11 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
             when (node) {
                 is KotlinAstNode.Package -> content.serialize(node)
                 is KotlinAstNode.Import -> content.serialize(node)
-                is KotlinAstNode.Class -> content.serialize(node)
+                is KotlinAstNode.KClass -> content.serialize(node)
+                is KotlinAstNode.KMethod -> {}
+                is KotlinAstNode.KField -> {}
+                is KotlinAstNode.KConstructor -> {}
+                else -> throw NotImplementedError("Not implemented for node: $node")
             }
         }
 
@@ -63,49 +65,66 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         appendLine("import $staticKeyword$importName")
     }
 
-    private fun SourceCodeBuilder.serialize(classNode: KotlinAstNode.Class) {
+    private fun SourceCodeBuilder.serialize(classNode: KotlinAstNode.KClass) {
         appendLine("class ${classNode.name}")
 
-        val hasBody =
-            (classNode.fields.isNotEmpty()
-                || classNode.constructors.isNotEmpty()
-                || classNode.methods.isNotEmpty())
+        val hasBody = classNode.nodes.isNotEmpty()
 
         if (hasBody) {
             appendBlock {
-                for (field in classNode.fields) {
-                    newLine()
-                    serialize(field)
-                }
+                for (node in classNode.nodes) {
+                    when (node) {
+                        is KotlinAstNode.KField -> {
+                            newLine()
+                            serialize(node)
+                        }
 
-                for (constructor in classNode.constructors) {
-                    newLine()
-                    serialize(constructor)
-                }
+                        is KotlinAstNode.KConstructor -> {
+                            newLine()
+                            serialize(node)
+                        }
 
-                for (method in classNode.methods) {
-                    newLine()
-                    serialize(method)
-                }
+                        is KotlinAstNode.KMethod -> {
+                            newLine()
+                            serialize(node)
+                        }
 
-                newLine()
-                append("companion object")
-                appendBlock {
-                    for (method in classNode.companionMethods) {
-                        newLine()
-                        serialize(method)
+                        is KotlinAstNode.CompanionObject -> {
+                            newLine()
+                            serialize(node)
+                        }
+
+                        else -> throw NotImplementedError("Not implemented for node: $node")
                     }
                 }
+//                for (field in classNode.fields) {
+//                    newLine()
+//                    serialize(field)
+//                }
+//
+//                for (constructor in classNode.constructors) {
+//                    newLine()
+//                    serialize(constructor)
+//                }
+//
+//                for (method in classNode.methods) {
+//                    newLine()
+//                    serialize(method)
+//                }
+//
+//                newLine()
+//                append("companion object")
+//                appendBlock {
+//                    for (method in classNode.companionMethods) {
+//                        newLine()
+//                        serialize(method)
+//                    }
+//                }
             }
         }
     }
 
-    private fun SourceCodeBuilder.serialize(field: KField) {
-//        val isNonNullable =
-//            field.type.isPrimitive()
-//                || field.initializer.isLiteral()
-//                || field.initializer.isConstructorInvocation()
-
+    private fun SourceCodeBuilder.serialize(field: KotlinAstNode.KField) {
         val name = field.name
         val type = formatTypeName(field.type)
         val value = formatFieldValue(field.initializer, field.type)
@@ -113,28 +132,45 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         append("var $name: $type = $value")
     }
 
-    private fun SourceCodeBuilder.serialize(constructor: KConstructor) {
+    private fun SourceCodeBuilder.serialize(constructor: KotlinAstNode.KConstructor) {
         val parameters = constructor.parameters
             .map { parameter -> formatParameter(parameter) }
             .joinToString(separator = ", ")
 
         append("constructor($parameters)")
 
-        if (constructor.body is CodeBlock.Expressions) {
-            val expressions = constructor.body.expressions
+        when (constructor.body) {
+            KCodeBlock.Empty -> append(" {}")
+            is KCodeBlock.Expressions -> {
+                val expressions = constructor.body.expressions
 
-            appendBlock {
-                for (expression in expressions) {
-                    newLine()
-                    append(formatExpression(expression))
+                appendBlock {
+                    for (expression in expressions) {
+                        newLine()
+                        append(formatExpression(expression))
+                    }
                 }
             }
-        } else {
-            append(" {}")
         }
     }
 
-    private fun SourceCodeBuilder.serialize(method: KMethod) {
+    private fun SourceCodeBuilder.serialize(companionObject: KotlinAstNode.CompanionObject) {
+        append("companion object")
+        appendBlock {
+            for (node in companionObject.nodes) {
+                when (node) {
+                    is KotlinAstNode.KMethod -> {
+                        newLine()
+                        serialize(node)
+                    }
+
+                    else -> throw NotImplementedError("Not implemented for node: $node")
+                }
+            }
+        }
+    }
+
+    private fun SourceCodeBuilder.serialize(method: KotlinAstNode.KMethod) {
         val name = method.name
         val isReturnUnit = method.returnType.isUnit()
         val returnType = formatTypeName(method.returnType)
@@ -147,17 +183,18 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         val declaration = "fun $name($parameters)$returnDeclaration"
         append(declaration)
 
-        if (method.body is CodeBlock.Expressions) {
-            val expressions = method.body.expressions
+        when (method.body) {
+            KCodeBlock.Empty -> append(" {}")
+            is KCodeBlock.Expressions -> {
+                val expressions = method.body.expressions
 
-            appendBlock {
-                for (expression in expressions) {
-                    newLine()
-                    append(formatExpression(expression))
+                appendBlock {
+                    for (expression in expressions) {
+                        newLine()
+                        append(formatExpression(expression))
+                    }
                 }
             }
-        } else {
-            append(" {}")
         }
     }
 
@@ -167,38 +204,17 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         return "$name: $type"
     }
 
-    @Deprecated("")
-    private fun formatParameter(parameter: Parameter): String {
-        val name = parameter.name
-        val isNullable = isTypeNullable(parameter.type)
-        val type = formatTypeName(parameter.type, isNullable = isNullable)
-        return "$name: $type"
-    }
-
-    private fun isTypeNullable(type: TypeReference): Boolean {
+    private fun isTypeNullable(type: JTypeReference): Boolean {
         return !type.isPrimitive()
     }
 
     private fun formatFieldValue(
-        initializer: InitializerBlock,
+        initializer: KCodeBlock,
         type: KTypeReference
     ): String {
-        return if (initializer is InitializerBlock.ExpressionBlock) {
-            formatExpression(initializer.expression)
-        } else {
-            getDefaultValue(type)
-        }
-    }
-
-    @Deprecated("")
-    private fun formatFieldValue(
-        initializer: InitializerBlock,
-        type: TypeReference
-    ): String {
-        return if (initializer is InitializerBlock.ExpressionBlock) {
-            formatExpression(initializer.expression)
-        } else {
-            getDefaultValue(type)
+        return when (initializer) {
+            KCodeBlock.Empty -> getDefaultValue(type)
+            is KCodeBlock.Expressions -> formatExpressions(initializer.expressions)
         }
     }
 
@@ -222,34 +238,6 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
-    @Deprecated("")
-    private fun formatTypeName(
-        type: TypeReference,
-        isNullable: Boolean = true
-    ): String {
-        val argTypes = type.typeArguments
-            .map { argType -> formatTypeName(argType, isNullable = false) }
-            .joinToString(separator = ", ")
-
-        val formattedType = when (type.kind) {
-            TypeReferenceKind.PRIMITIVE -> type.name.first().uppercase() + type.name.drop(1)
-            TypeReferenceKind.VOID -> "Unit"
-            else -> {
-                if (argTypes.isNotEmpty()) {
-                    "${type.name}<$argTypes>"
-                } else {
-                    type.name
-                }
-            }
-        }
-
-        return if (isNullable) {
-            "$formattedType?"
-        } else {
-            formattedType
-        }
-    }
-
     private fun getDefaultValue(type: KTypeReference): String {
         return when {
             type.isPrimitiveBoolean() -> "false"
@@ -263,63 +251,60 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
-    @Deprecated("")
-    private fun getDefaultValue(type: TypeReference): String {
-        return when {
-            type.isPrimitiveBoolean() -> "false"
-            type.isPrimitiveByte() -> "0"
-            type.isPrimitiveChar() -> "0.toChar()"
-            type.isPrimitiveInt() -> "0"
-            type.isPrimitiveLong() -> "0L"
-            type.isPrimitiveFloat() -> "0F"
-            type.isPrimitiveDouble() -> "0.0"
-            else -> "null"
+    private fun formatExpressions(expressions: List<KExpression>): String {
+        return expressions.joinToString(separator = "\n") { nested ->
+            formatExpression(nested)
         }
     }
 
-    private fun formatExpression(expression: Expression): String {
+    private fun formatExpression(expression: KExpression): String {
         return when (expression) {
-            is Expression.Null -> "null"
-            is Expression.Literal -> formatLiteral(expression)
-            is Expression.Identifier -> expression.name
-            is Expression.Expressions -> expression.expressions.joinToString(separator = "\n") { nested ->
-                formatExpression(nested)
+            KExpression.Empty -> ""
+            is KExpression.Identifier -> "$expression.name"
+            is KExpression.TypedIdentifier -> {
+//                val type = formatTypeName(expression.identifier)
+                // TODO:
+                throw NotImplementedError()
             }
 
-            is Expression.If -> formatIfExpression(expression)
-            is Expression.ForLoop -> formatForLoop(expression)
-            is Expression.ForEachLoop -> formatForEachLoop(expression)
-            is Expression.Assignment -> {
+            is KExpression.Initializer -> formatExpression(expression.initializer)
+            is KExpression.Literal -> formatLiteral(expression)
+            is KExpression.Expressions -> formatExpressions(expression.expressions)
+            is KExpression.If -> formatIfExpression(expression)
+            is KExpression.ForEachLoop -> formatForEachLoop(expression)
+            is KExpression.Assignment -> {
                 val variable = formatExpression(expression.variable)
                 val value = formatExpression(expression.expression)
                 "$variable = $value"
             }
 
-            is Expression.FieldAccess -> "${formatExpression(expression.expression)}.${expression.name}"
-            is Expression.BinaryExpression -> {
+            is KExpression.FieldAccess -> {
+                "${formatExpression(expression.expression)}.${expression.name}"
+            }
+
+            is KExpression.BinaryExpression -> {
                 val lhs = formatExpression(expression.lhs)
                 val rhs = formatExpression(expression.rhs)
                 "$lhs ${formatOperator(expression.operator)} $rhs"
             }
 
-            is Expression.MethodInvocation -> {
+            is KExpression.MethodInvocation -> {
                 val method = formatExpression(expression.method)
                 val arguments = expression.arguments
                     .joinToString(separator = ", ") { argument -> formatExpression(argument) }
                 "$method($arguments)"
             }
 
-            is Expression.ConstructorInvocation -> formatConstructorInvocation(expression)
-            is Expression.DeclareVariable -> formatVariableDeclaration(expression)
-            is Expression.Return -> "return ${formatExpression(expression.expression)}"
-            else -> throw AstSerializationException("Not implemented expression", expression)
+            is KExpression.ConstructorInvocation -> formatConstructorInvocation(expression)
+            is KExpression.DeclareVariable -> formatVariableDeclaration(expression)
+            is KExpression.Return -> "return ${formatExpression(expression.expression)}"
         }
     }
 
-    private fun formatIfExpression(expression: Expression.If): String {
+    private fun formatIfExpression(expression: KExpression.If): String {
         val condition = formatExpression(expression.condition)
         val thenBlock = formatBranchExpression(expression.thenExpression)
-        val elseBlock = if (expression.elseExpression != Expression.Empty) {
+        val elseBlock = if (expression.elseExpression != KExpression.Empty) {
             " else ${formatBranchExpression(expression.elseExpression)}"
         } else {
             ""
@@ -328,40 +313,39 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         return "if ($condition) $thenBlock$elseBlock"
     }
 
-    private fun formatBranchExpression(expression: Expression): String {
+    private fun formatBranchExpression(expression: KExpression): String {
         val content = formatExpression(expression)
         return "{\n$content\n}"
     }
 
-    private fun formatForLoop(expression: Expression.ForLoop): String {
-        val initializers = expression.initializers.joinToString(separator = "\n") { initializer ->
-            formatExpression(initializer)
-        }
-        val condition = formatExpression(expression.condition)
-        val body = formatExpression(expression.body)
-        val updates = expression.updates.joinToString(separator = "\n") { update ->
-            formatExpression(update)
-        }
-        val bodyWithUpdates = listOf(body, updates)
-            .filter { it.isNotBlank() }
-            .joinToString(separator = "\n")
+//    private fun formatForLoop(expression: JExpression.ForLoop): String {
+//        val initializers = expression.initializers.joinToString(separator = "\n") { initializer ->
+//            formatJExpression(initializer)
+//        }
+//        val condition = formatJExpression(expression.condition)
+//        val body = formatJExpression(expression.body)
+//        val updates = expression.updates.joinToString(separator = "\n") { update ->
+//            formatJExpression(update)
+//        }
+//        val bodyWithUpdates = listOf(body, updates)
+//            .filter { it.isNotBlank() }
+//            .joinToString(separator = "\n")
+//
+//        return listOf(initializers, "while ($condition) {\n$bodyWithUpdates\n}")
+//            .filter { it.isNotBlank() }
+//            .joinToString(separator = "\n")
+//    }
 
-        return listOf(initializers, "while ($condition) {\n$bodyWithUpdates\n}")
-            .filter { it.isNotBlank() }
-            .joinToString(separator = "\n")
-    }
-
-    private fun formatForEachLoop(expression: Expression.ForEachLoop): String {
-        val isNullable = !expression.variable.type.isPrimitive()
-        val variableType = formatTypeName(expression.variable.type, isNullable = isNullable)
+    private fun formatForEachLoop(expression: KExpression.ForEachLoop): String {
+        val variableType = formatTypeName(expression.variable.type)
         val iterable = formatExpression(expression.iterable)
         val body = formatExpression(expression.body)
         // TODO: check for the type of collection
-        return "for (${expression.variable.name} in ($iterable ?: emptyList())) {\n$body\n}"
+        return "for (${expression.variable.name} in $iterable!!) {\n$body\n}"
     }
 
     private fun formatConstructorInvocation(
-        expression: Expression.ConstructorInvocation
+        expression: KExpression.ConstructorInvocation
     ): String {
         val identifier = formatExpression(expression.identifier)
 
@@ -372,13 +356,14 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         return "$identifier($arguments)"
     }
 
-    private fun formatVariableDeclaration(expression: Expression.DeclareVariable): String {
-        val isNonNullable =
-            expression.type.isPrimitive()
-                || expression.initializer.isLiteral()
-                || expression.initializer.isConstructorInvocation()
+    private fun formatVariableDeclaration(expression: KExpression.DeclareVariable): String {
+//        val isNonNullable =
+//            expression.type.isPrimitive()
+//                || expression.initializer.isLiteral()
+//                || expression.initializer.isConstructorInvocation()
 
-        val type = formatTypeName(expression.type, isNullable = !isNonNullable)
+//        val kotlinType =
+        val type = formatTypeName(expression.type)
         val value = formatFieldValue(expression.initializer, expression.type)
         return "var ${expression.name}: $type = $value"
     }
@@ -398,25 +383,25 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         }
     }
 
-    private fun formatLiteral(literal: Expression.Literal): String {
+    private fun formatLiteral(literal: KExpression.Literal): String {
         return when (literal) {
-            is Expression.BooleanLiteral -> literal.value.toString()
-            is Expression.ByteLiteral -> literal.value.toString()
-            is Expression.CharLiteral -> "'${literal.value}'"
-            is Expression.IntLiteral -> literal.value.toString()
-            is Expression.LongLiteral -> literal.value.toString() + "L"
-            is Expression.FloatLiteral -> literal.value.toString() + "F"
-            is Expression.DoubleLiteral -> literal.value.toString()
-            is Expression.StringLiteral -> "\"" + literal.value + "\""
-            else -> literal.toString()
+            is KExpression.BooleanLiteral -> literal.value.toString()
+            is KExpression.ByteLiteral -> literal.value.toString()
+            is KExpression.CharLiteral -> "'${literal.value}'"
+            is KExpression.IntLiteral -> literal.value.toString()
+            is KExpression.LongLiteral -> literal.value.toString() + "L"
+            is KExpression.FloatLiteral -> literal.value.toString() + "F"
+            is KExpression.DoubleLiteral -> literal.value.toString()
+            is KExpression.StringLiteral -> "\"" + literal.value + "\""
+            is KExpression.Null -> "null"
         }
     }
 
-    private fun Method.isStatic(): Boolean {
+    private fun JMethod.isStatic(): Boolean {
         return Modifier.STATIC in modifiers
     }
 
-    private fun CodeBlock.isNotEmpty(): Boolean {
-        return this != CodeBlock.Empty
+    private fun JCodeBlock.isNotEmpty(): Boolean {
+        return this != JCodeBlock.Empty
     }
 }

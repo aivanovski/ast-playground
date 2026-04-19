@@ -90,7 +90,7 @@ class FieldDeclarationTest {
     }
 
     @Test
-    fun `should resolve method calls`() {
+    fun `should support method calls`() {
         transpileJavaAndAssert(
             input = """
                 class Test {
@@ -102,9 +102,9 @@ class FieldDeclarationTest {
             """,
             expected = """
                 class Test {
-                    var s0 = m0()
-                    fun m0(): String {
-                        return "abc123";
+                    var s0: String? = m0()
+                    fun m0(): String? {
+                        return "abc123"
                     }
                 }
             """

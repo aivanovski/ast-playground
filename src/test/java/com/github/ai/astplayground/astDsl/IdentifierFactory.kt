@@ -1,61 +1,61 @@
 package com.github.ai.astplayground.astDsl
 
-import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.JExpression
 import com.github.ai.astplayground.transpiler.parser.model.Operator
 
 object IdentifierFactory {
 
-    infix fun Expression.Identifier.plus(another: Expression): Expression.BinaryExpression {
-        return Expression.BinaryExpression(
+    infix fun JExpression.Identifier.plus(another: JExpression): JExpression.BinaryExpression {
+        return JExpression.BinaryExpression(
             operator = Operator.PLUS,
             lhs = this,
             rhs = another
         )
     }
 
-    fun String.asIdentifier(): Expression.Identifier {
-        return Expression.Identifier(
+    fun String.asIdentifier(): JExpression.Identifier {
+        return JExpression.Identifier(
             name = this
         )
     }
 
     infix fun String.field(
         fieldName: String
-    ): Expression.FieldAccess {
+    ): JExpression.FieldAccess {
         val identifierName = this
-        val identifier = Expression.Identifier(identifierName)
+        val identifier = JExpression.Identifier(identifierName)
 
-        return Expression.FieldAccess(
+        return JExpression.FieldAccess(
             name = fieldName,
             expression = identifier
         )
     }
 
     infix fun String.invokeConstructor(
-        arguments: List<Expression>
-    ): Expression.ConstructorInvocation {
-        return Expression.ConstructorInvocation(
-            identifier = Expression.Identifier(this),
+        arguments: List<JExpression>
+    ): JExpression.ConstructorInvocation {
+        return JExpression.ConstructorInvocation(
+            identifier = JExpression.Identifier(this),
             arguments = arguments
         )
     }
 
     infix fun String.method(
         methodName: String
-    ): Expression.FieldAccess {
+    ): JExpression.FieldAccess {
         val identifierName = this
-        val identifier = Expression.Identifier(identifierName)
+        val identifier = JExpression.Identifier(identifierName)
 
-        return Expression.FieldAccess(
+        return JExpression.FieldAccess(
             name = methodName,
             expression = identifier
         )
     }
 
-    infix fun Expression.FieldAccess.method(
+    infix fun JExpression.FieldAccess.method(
         methodName: String
-    ): Expression.FieldAccess {
-        return Expression.FieldAccess(
+    ): JExpression.FieldAccess {
+        return JExpression.FieldAccess(
             name = methodName,
             expression = this
         )

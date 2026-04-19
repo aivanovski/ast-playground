@@ -38,7 +38,7 @@ class IfStatementTest {
                         if (true || false) {
                             System.out.println("Hello")
                         }
-                        if (i == 1) {
+                        if (i!! == 1) {
                             System.out.println("Hello")
                         }
                     }

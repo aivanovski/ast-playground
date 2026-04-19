@@ -14,8 +14,8 @@ import com.github.ai.astplayground.astDsl.TypeReferenceFactory
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.asType
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.void
 import com.github.ai.astplayground.parseAndAssert
-import com.github.ai.astplayground.transpiler.parser.model.Expression
-import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.JExpression
+import com.github.ai.astplayground.transpiler.parser.model.JInitializerBlock
 import org.junit.jupiter.api.Test
 
 class CodeBlockTest {
@@ -68,8 +68,8 @@ class CodeBlockTest {
                         variable(
                             "i",
                             TypeReferenceFactory.int(),
-                            InitializerBlock.ExpressionBlock(
-                                Expression.MethodInvocation(
+                            JInitializerBlock.ExpressionBlock(
+                                JExpression.MethodInvocation(
                                     arguments = listOf(1.literal(), 2.literal()),
                                     method = "sum".asIdentifier()
                                 )

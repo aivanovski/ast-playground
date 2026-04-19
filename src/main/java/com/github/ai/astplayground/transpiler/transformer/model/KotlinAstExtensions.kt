@@ -1,4 +1,4 @@
-package com.github.ai.astplayground.transpiler.serializer.model
+package com.github.ai.astplayground.transpiler.transformer.model
 
 fun KTypeReference.isPrimitiveByte() =
     name == "Byte"

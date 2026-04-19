@@ -1,11 +1,11 @@
 package com.github.ai.astplayground.astDsl
 
-import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
 import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 
 object TypeReferenceFactory {
 
-    fun String.asType() = TypeReference(
+    fun String.asType() = JTypeReference(
         name = this,
         kind = TypeReferenceKind.DECLARED,
         typeArguments = emptyList()
@@ -19,7 +19,7 @@ object TypeReferenceFactory {
     fun parameterizedType(
         name: String,
         parameterizedWith: String
-    ) = TypeReference(
+    ) = JTypeReference(
         name = name,
         kind = TypeReferenceKind.DECLARED,
         typeArguments = listOf(type(parameterizedWith))
@@ -27,8 +27,8 @@ object TypeReferenceFactory {
 
     fun type(
         name: String,
-        vararg typeArguments: TypeReference
-    ) = TypeReference(
+        vararg typeArguments: JTypeReference
+    ) = JTypeReference(
         name = name,
         kind = TypeReferenceKind.DECLARED,
         typeArguments = typeArguments.toList()

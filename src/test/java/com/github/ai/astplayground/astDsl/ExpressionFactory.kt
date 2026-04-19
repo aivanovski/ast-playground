@@ -1,47 +1,47 @@
 package com.github.ai.astplayground.astDsl
 
-import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.JExpression
 import com.github.ai.astplayground.transpiler.parser.model.Operator
 
 object ExpressionFactory {
 
-    infix fun Expression.FieldAccess.invoke(
-        argument: Expression
-    ): Expression.MethodInvocation {
-        return Expression.MethodInvocation(
-            arguments = if (argument == Expression.Empty) emptyList() else listOf(argument),
+    infix fun JExpression.FieldAccess.invoke(
+        argument: JExpression
+    ): JExpression.MethodInvocation {
+        return JExpression.MethodInvocation(
+            arguments = if (argument == JExpression.Empty) emptyList() else listOf(argument),
             method = this
         )
     }
 
-    infix fun Expression.or(another: Expression) = Expression.BinaryExpression(
+    infix fun JExpression.or(another: JExpression) = JExpression.BinaryExpression(
         operator = Operator.OR,
         lhs = this,
         rhs = another
     )
 
-    infix fun Expression.and(another: Expression) = Expression.BinaryExpression(
+    infix fun JExpression.and(another: JExpression) = JExpression.BinaryExpression(
         operator = Operator.AND,
         lhs = this,
         rhs = another
     )
 
-    infix fun Expression.equal(another: Expression) = Expression.BinaryExpression(
+    infix fun JExpression.equal(another: JExpression) = JExpression.BinaryExpression(
         operator = Operator.EQUALS,
         lhs = this,
         rhs = another
     )
 
-    fun identifier(vararg path: String): Expression {
-        val identifier = Expression.Identifier(path.first())
+    fun identifier(vararg path: String): JExpression {
+        val identifier = JExpression.Identifier(path.first())
 
         // System.out.println => println -> out -> System
-        val fields = mutableListOf<Expression.FieldAccess>()
+        val fields = mutableListOf<JExpression.FieldAccess>()
 
-        var previousField: Expression = identifier
+        var previousField: JExpression = identifier
 
         for (fieldName in path.drop(1)) {
-            val field = Expression.FieldAccess(
+            val field = JExpression.FieldAccess(
                 name = fieldName,
                 expression = previousField
             )
@@ -60,30 +60,30 @@ object ExpressionFactory {
     fun typedIdentifier(
         name: String,
         parameterType: String
-    ) = Expression.TypedIdentifier(
+    ) = JExpression.TypedIdentifier(
         identifier = TypeReferenceFactory.type(name),
         types = listOf(TypeReferenceFactory.type(parameterType))
     )
 
     fun typedIdentifier(
         name: String
-    ) = Expression.TypedIdentifier(
+    ) = JExpression.TypedIdentifier(
         identifier = TypeReferenceFactory.type(name),
         types = listOf()
     )
 
     fun constructor(
-        identifier: Expression,
-        arguments: List<Expression> = emptyList()
-    ) = Expression.ConstructorInvocation(
+        identifier: JExpression,
+        arguments: List<JExpression> = emptyList()
+    ) = JExpression.ConstructorInvocation(
         identifier = identifier,
         arguments = arguments
     )
 
-    fun string(value: String) = Expression.StringLiteral(value)
-    fun int(value: Int) = Expression.IntLiteral(value)
+    fun string(value: String) = JExpression.StringLiteral(value)
+    fun int(value: Int) = JExpression.IntLiteral(value)
 
-    fun String.literal() = Expression.StringLiteral(this)
-    fun Int.literal() = Expression.IntLiteral(this)
-    fun Boolean.literal() = Expression.BooleanLiteral(this)
+    fun String.literal() = JExpression.StringLiteral(this)
+    fun Int.literal() = JExpression.IntLiteral(this)
+    fun Boolean.literal() = JExpression.BooleanLiteral(this)
 }

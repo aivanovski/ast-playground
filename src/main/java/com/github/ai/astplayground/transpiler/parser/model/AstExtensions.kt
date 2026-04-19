@@ -1,27 +1,27 @@
 package com.github.ai.astplayground.transpiler.parser.model
 
-fun TypeReference.isPrimitiveByte() =
+fun JTypeReference.isPrimitiveByte() =
     name == "byte" && kind == TypeReferenceKind.PRIMITIVE
 
-fun TypeReference.isPrimitiveChar() =
+fun JTypeReference.isPrimitiveChar() =
     name == "char" && kind == TypeReferenceKind.PRIMITIVE
 
-fun TypeReference.isPrimitiveInt() =
+fun JTypeReference.isPrimitiveInt() =
     name == "int" && kind == TypeReferenceKind.PRIMITIVE
 
-fun TypeReference.isPrimitiveLong() =
+fun JTypeReference.isPrimitiveLong() =
     name == "long" && kind == TypeReferenceKind.PRIMITIVE
 
-fun TypeReference.isPrimitiveFloat() =
+fun JTypeReference.isPrimitiveFloat() =
     name == "float" && kind == TypeReferenceKind.PRIMITIVE
 
-fun TypeReference.isPrimitiveDouble() =
+fun JTypeReference.isPrimitiveDouble() =
     name == "double" && kind == TypeReferenceKind.PRIMITIVE
 
-fun TypeReference.isPrimitiveBoolean() =
+fun JTypeReference.isPrimitiveBoolean() =
     name == "boolean" && kind == TypeReferenceKind.PRIMITIVE
 
-fun TypeReference.isPrimitive() =
+fun JTypeReference.isPrimitive() =
     isPrimitiveBoolean()
         || isPrimitiveByte()
         || isPrimitiveChar()
@@ -30,16 +30,16 @@ fun TypeReference.isPrimitive() =
         || isPrimitiveFloat()
         || isPrimitiveDouble()
 
-fun InitializerBlock.isLiteral(): Boolean {
-    return this is InitializerBlock.ExpressionBlock
-        && expression is Expression.Literal
+fun JInitializerBlock.isLiteral(): Boolean {
+    return this is JInitializerBlock.ExpressionBlock
+        && expression is JExpression.Literal
 }
 
-fun InitializerBlock.isConstructorInvocation(): Boolean {
-    return this is InitializerBlock.ExpressionBlock
-        && expression is Expression.ConstructorInvocation
+fun JInitializerBlock.isConstructorInvocation(): Boolean {
+    return this is JInitializerBlock.ExpressionBlock
+        && expression is JExpression.ConstructorInvocation
 }
 
-fun Method.isStatic(): Boolean {
+fun JMethod.isStatic(): Boolean {
     return Modifier.STATIC in modifiers
 }

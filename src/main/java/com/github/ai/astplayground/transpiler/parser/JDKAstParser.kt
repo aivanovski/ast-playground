@@ -1,16 +1,16 @@
 package com.github.ai.astplayground.transpiler.parser
 
-import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
-import com.github.ai.astplayground.transpiler.parser.model.Constructor
-import com.github.ai.astplayground.transpiler.parser.model.Expression
-import com.github.ai.astplayground.transpiler.parser.model.Field
-import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.JCodeBlock
+import com.github.ai.astplayground.transpiler.parser.model.JConstructor
+import com.github.ai.astplayground.transpiler.parser.model.JExpression
+import com.github.ai.astplayground.transpiler.parser.model.JField
+import com.github.ai.astplayground.transpiler.parser.model.JInitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
-import com.github.ai.astplayground.transpiler.parser.model.Method
+import com.github.ai.astplayground.transpiler.parser.model.JMethod
 import com.github.ai.astplayground.transpiler.parser.model.Modifier
 import com.github.ai.astplayground.transpiler.parser.model.Operator
-import com.github.ai.astplayground.transpiler.parser.model.Parameter
-import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.JParameter
+import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
 import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 import com.github.ai.astplayground.transpiler.model.exception.AstParsingException
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveByte
@@ -131,10 +131,10 @@ class JDKAstParser : AstParser {
         }
     }
 
-    private fun ClassTree.toClassNode(): JavaAstNode.Class {
-        val fields = mutableListOf<Field>()
-        val constructors = mutableListOf<Constructor>()
-        val methods = mutableListOf<Method>()
+    private fun ClassTree.toClassNode(): JavaAstNode.JClass {
+        val fields = mutableListOf<JField>()
+        val constructors = mutableListOf<JConstructor>()
+        val methods = mutableListOf<JMethod>()
 //        val nestedTypes = mutableListOf<JavaClassDeclarationNode>()
 //        val rawMembers = mutableListOf<String>()
 
@@ -154,7 +154,7 @@ class JDKAstParser : AstParser {
             }
         }
 
-        return JavaAstNode.Class(
+        return JavaAstNode.JClass(
             name = simpleName.toString(),
             modifiers = modifiers.flags.toModifiers(),
             fields = fields,
@@ -163,37 +163,37 @@ class JDKAstParser : AstParser {
         )
     }
 
-    private fun MethodTree.toConstructor(): Constructor {
-        return Constructor(
+    private fun MethodTree.toConstructor(): JConstructor {
+        return JConstructor(
             modifiers = modifiers.flags.toModifiers(),
             parameters = parameters.toParameters(),
-            body = body?.toCodeBlock() ?: CodeBlock.Empty,
+            body = body?.toCodeBlock() ?: JCodeBlock.Empty,
         )
     }
 
-    private fun MethodTree.toMethod(): Method {
+    private fun MethodTree.toMethod(): JMethod {
         val methodReturnType = returnType
             ?: throw IllegalStateException("Expected method return type to be present")
 
-        return Method(
+        return JMethod(
             name = name.toString(),
             modifiers = modifiers.flags.toModifiers(),
             returnType = methodReturnType.toTypeReference(),
             parameters = parameters.toParameters(),
-            body = body?.toCodeBlock() ?: CodeBlock.Empty
+            body = body?.toCodeBlock() ?: JCodeBlock.Empty
         )
     }
 
-    private fun List<VariableTree>.toParameters(): List<Parameter> {
+    private fun List<VariableTree>.toParameters(): List<JParameter> {
         return map { parameter -> parameter.toParameter() }
     }
 
-    private fun VariableTree.toField(): Field {
+    private fun VariableTree.toField(): JField {
         // TODO: implement initializer from: initializer?.toString(),
         val type = type.toTypeReference()
         val body = initializer.toInitializerBlock(forType = type)
 
-        return Field(
+        return JField(
             name = name.toString(),
             type = type,
             modifiers = modifiers.flags.toModifiers(),
@@ -203,34 +203,34 @@ class JDKAstParser : AstParser {
 
     private fun convertLiteral(
         literal: LiteralTree,
-        forType: TypeReference?
-    ): Expression.Literal {
+        forType: JTypeReference?
+    ): JExpression.Literal {
         val value = literal.value
 
-        if (literal.kind == Tree.Kind.NULL_LITERAL) return Expression.Null
+        if (literal.kind == Tree.Kind.NULL_LITERAL) return JExpression.Null
 
         val literalByValue = when {
-            value is Boolean -> Expression.BooleanLiteral(value)
-            value is Char -> Expression.CharLiteral(value)
-            value is Int -> Expression.IntLiteral(value)
-            value is String -> Expression.StringLiteral(value)
+            value is Boolean -> JExpression.BooleanLiteral(value)
+            value is Char -> JExpression.CharLiteral(value)
+            value is Int -> JExpression.IntLiteral(value)
+            value is String -> JExpression.StringLiteral(value)
             else -> null
         }
 
         val typedLiteral = if (forType != null) {
             when {
-                forType.isPrimitiveByte() && value is Int -> Expression.ByteLiteral(value.toByte())
-                forType.isPrimitiveChar() && value is Int -> Expression.CharLiteral(value.toChar())
-                forType.isPrimitiveInt() && value is Int -> Expression.IntLiteral(value)
+                forType.isPrimitiveByte() && value is Int -> JExpression.ByteLiteral(value.toByte())
+                forType.isPrimitiveChar() && value is Int -> JExpression.CharLiteral(value.toChar())
+                forType.isPrimitiveInt() && value is Int -> JExpression.IntLiteral(value)
 
-                forType.isPrimitiveLong() && value is Long -> Expression.LongLiteral(value)
-                forType.isPrimitiveLong() && value is Int -> Expression.LongLiteral(value.toLong())
+                forType.isPrimitiveLong() && value is Long -> JExpression.LongLiteral(value)
+                forType.isPrimitiveLong() && value is Int -> JExpression.LongLiteral(value.toLong())
 
-                forType.isPrimitiveFloat() && value is Float -> Expression.FloatLiteral(value)
-                forType.isPrimitiveFloat() && value is Int -> Expression.FloatLiteral(value.toFloat())
+                forType.isPrimitiveFloat() && value is Float -> JExpression.FloatLiteral(value)
+                forType.isPrimitiveFloat() && value is Int -> JExpression.FloatLiteral(value.toFloat())
 
-                forType.isPrimitiveDouble() && value is Double -> Expression.DoubleLiteral(value)
-                forType.isPrimitiveDouble() && value is Int -> Expression.DoubleLiteral(value.toDouble())
+                forType.isPrimitiveDouble() && value is Double -> JExpression.DoubleLiteral(value)
+                forType.isPrimitiveDouble() && value is Int -> JExpression.DoubleLiteral(value.toDouble())
                 else -> null
             }
         } else {
@@ -242,23 +242,23 @@ class JDKAstParser : AstParser {
             ?: throw AstParsingException("Invalid literal", literal)
     }
 
-    private fun VariableTree.toParameter(): Parameter {
+    private fun VariableTree.toParameter(): JParameter {
         val modifiers = modifiers.flags.toModifiers()
         val isVarArgs = Modifier.FINAL !in modifiers && type.toString().endsWith("...")
 
-        return Parameter(
+        return JParameter(
             name = name.toString(),
             type = type.toTypeReference(),
             isVarArgs = isVarArgs,
         )
     }
 
-    private fun Tree.toTypeReference(): TypeReference {
+    private fun Tree.toTypeReference(): JTypeReference {
         return when (this) {
             is AnnotatedTypeTree -> underlyingType.toTypeReference()
             // TODO:
 //            is ArrayTypeTree -> type.toJavaTypeReference().withArrayDimension()
-            is ParameterizedTypeTree -> TypeReference(
+            is ParameterizedTypeTree -> JTypeReference(
                 name = type.toString(),
                 kind = TypeReferenceKind.DECLARED,
                 typeArguments = typeArguments.map { typeArgument -> typeArgument.toTypeReference() },
@@ -270,27 +270,27 @@ class JDKAstParser : AstParser {
                     else -> TypeReferenceKind.PRIMITIVE
                 }
 
-                TypeReference(
+                JTypeReference(
                     name = primitiveTypeKind.name.lowercase(),
                     kind = kind
                 )
             }
 
-            else -> TypeReference(
+            else -> JTypeReference(
                 name = toString(),
                 kind = TypeReferenceKind.DECLARED,
             )
         }
     }
 
-    private fun BlockTree.toCodeBlock(): CodeBlock {
+    private fun BlockTree.toCodeBlock(): JCodeBlock {
         val expressions = statements
             .map { statement -> convertStatement(statement) }
 
         return if (expressions.isEmpty()) {
-            CodeBlock.Empty
+            JCodeBlock.Empty
         } else {
-            CodeBlock.Expressions(
+            JCodeBlock.Expressions(
                 expressions = expressions
             )
         }
@@ -298,17 +298,17 @@ class JDKAstParser : AstParser {
 
     private fun convertStatements(
         statements: List<StatementTree>
-    ): List<Expression> {
+    ): List<JExpression> {
         return statements.map { statement -> convertStatement(statement) }
     }
 
     private fun convertStatement(
         statement: StatementTree
-    ): Expression {
+    ): JExpression {
         return when (statement) {
             is ExpressionStatementTree -> convertExpression(statement.expression)
             is VariableTree -> {
-                Expression.DeclareVariable(
+                JExpression.DeclareVariable(
                     name = statement.name.toString(),
                     type = statement.type.toTypeReference(),
                     initializer = statement.initializer.toInitializerBlock(forType = null)
@@ -316,36 +316,36 @@ class JDKAstParser : AstParser {
             }
 
             is ReturnTree -> {
-                Expression.Return(
+                JExpression.Return(
                     expression = convertExpression(statement.expression)
                 )
             }
 
             is IfTree -> {
-                Expression.If(
+                JExpression.If(
                     condition = convertExpression(statement.condition),
                     thenExpression = statement.thenStatement
                         ?.let { convertStatement(it) }
-                        ?: Expression.Empty,
+                        ?: JExpression.Empty,
                     elseExpression = statement.elseStatement
                         ?.let { convertStatement(it) }
-                        ?: Expression.Empty
+                        ?: JExpression.Empty
                 )
             }
 
             is ForLoopTree -> {
-                Expression.ForLoop(
+                JExpression.ForLoop(
                     initializers = convertStatements(statement.initializer),
                     condition = statement.condition?.let { convertExpression(it) }
-                        ?: Expression.Empty,
+                        ?: JExpression.Empty,
                     updates = statement.update.map { update -> convertExpression(update.expression) },
                     body = convertStatement(statement.statement)
                 )
             }
 
             is EnhancedForLoopTree -> {
-                Expression.ForEachLoop(
-                    variable = Expression.DeclareVariable(
+                JExpression.ForEachLoop(
+                    variable = JExpression.DeclareVariable(
                         name = statement.variable.name.toString(),
                         type = statement.variable.type.toTypeReference(),
                         initializer = statement.variable.initializer.toInitializerBlock(forType = null)
@@ -363,34 +363,34 @@ class JDKAstParser : AstParser {
         }
     }
 
-    private fun List<Expression>.orEmpty(): Expression {
+    private fun List<JExpression>.orEmpty(): JExpression {
         return when {
-            size > 1 -> Expression.Expressions(this)
+            size > 1 -> JExpression.Expressions(this)
             size == 1 -> first()
-            else -> Expression.Empty
+            else -> JExpression.Empty
         }
     }
 
     private fun convertExpressions(
         expressions: List<ExpressionTree>
-    ): List<Expression> {
+    ): List<JExpression> {
         return expressions.map { expression -> convertExpression(expression) }
     }
 
     private fun convertExpression(
         expression: ExpressionTree,
-        forType: TypeReference? = null
-    ): Expression {
+        forType: JTypeReference? = null
+    ): JExpression {
         return when (expression) {
             is MethodInvocationTree -> {
-                Expression.MethodInvocation(
+                JExpression.MethodInvocation(
                     arguments = convertExpressions(expression.arguments),
                     method = convertExpression(expression.methodSelect)
                 )
             }
 
             is MemberSelectTree -> {
-                Expression.FieldAccess(
+                JExpression.FieldAccess(
                     name = expression.identifier.toString(),
                     expression = convertExpression(expression.expression)
                 )
@@ -398,24 +398,24 @@ class JDKAstParser : AstParser {
 
             is LiteralTree -> convertLiteral(expression, forType = forType)
 
-            is IdentifierTree -> Expression.Identifier(
+            is IdentifierTree -> JExpression.Identifier(
                 name = expression.toString()
             )
 
             is NewClassTree -> {
-                Expression.ConstructorInvocation(
+                JExpression.ConstructorInvocation(
                     identifier = convertExpression(expression.identifier),
                     arguments = convertExpressions(expression.arguments)
                 )
             }
 
-            is ParameterizedTypeTree -> Expression.TypedIdentifier(
+            is ParameterizedTypeTree -> JExpression.TypedIdentifier(
                 identifier = expression.type.toTypeReference(),
                 types = expression.typeArguments.map { it.toTypeReference() }
             )
 
             is BinaryTree -> {
-                Expression.BinaryExpression(
+                JExpression.BinaryExpression(
                     operator = expression.kind.name.toOperator(),
                     lhs = convertExpression(expression.leftOperand),
                     rhs = convertExpression(expression.rightOperand)
@@ -427,7 +427,7 @@ class JDKAstParser : AstParser {
             }
 
             is AssignmentTree -> {
-                Expression.Assignment(
+                JExpression.Assignment(
                     variable = convertExpression(expression.variable),
                     expression = convertExpression(expression.expression)
                 )
@@ -438,23 +438,23 @@ class JDKAstParser : AstParser {
     }
 
     private fun ExpressionTree?.toInitializerBlock(
-        forType: TypeReference?
-    ): InitializerBlock {
+        forType: JTypeReference?
+    ): JInitializerBlock {
         val expression = this
 
         return if (expression != null) {
             val convertedExpression = convertExpression(expression = expression, forType = forType)
-            val isNull = (convertedExpression == Expression.Null)
+            val isNull = (convertedExpression == JExpression.Null)
 
             if (!isNull) {
-                InitializerBlock.ExpressionBlock(
+                JInitializerBlock.ExpressionBlock(
                     expression = convertExpression(expression = expression, forType = forType)
                 )
             } else {
-                InitializerBlock.Empty
+                JInitializerBlock.Empty
             }
         } else {
-            InitializerBlock.Empty
+            JInitializerBlock.Empty
         }
 
     }

@@ -1,10 +1,11 @@
 package com.github.ai.astplayground.transpiler.transformer
 
-import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
-import com.github.ai.astplayground.transpiler.serializer.model.KotlinAstNode
+import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
+import com.github.ai.astplayground.transpiler.transformer.model.KotlinAstNode
 
 data class IRNode(
-    val jastNode: JavaAstNode,
-    val resolvedNode: KotlinAstNode?,
-    val nodes: List<IRNode>
+    val parent: IRNode?,
+    val node: KotlinAstNode,
+    val resolvedType: JTypeReference?,
+    val nodes: MutableList<IRNode>
 )

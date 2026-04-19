@@ -17,80 +17,89 @@ sealed interface JavaAstNode {
         val modifiers: Set<Modifier>
     }
 
-    data class Class(
+    data class JClass(
         override val name: String,
         override val modifiers: Set<Modifier>,
-        val fields: List<Field>,
-        val constructors: List<Constructor>,
-        val methods: List<Method>
+        val fields: List<JField>,
+        val constructors: List<JConstructor>,
+        val methods: List<JMethod>
     ) : TypeDeclaration
 }
 
-data class Constructor(
+data class JConstructor(
     val modifiers: Set<Modifier>,
-    val parameters: List<Parameter>,
-    val body: CodeBlock
+    val parameters: List<JParameter>,
+    val body: JCodeBlock
 )
 
-data class Method(
+data class JMethod(
     val name: String,
     val modifiers: Set<Modifier>,
-    val returnType: TypeReference,
-    val parameters: List<Parameter>,
-    val body: CodeBlock
+    val returnType: JTypeReference,
+    val parameters: List<JParameter>,
+    val body: JCodeBlock
 )
 
-data class Field(
+data class JField(
     val name: String,
     val modifiers: Set<Modifier>,
-    val type: TypeReference,
-    val initializer: InitializerBlock,
+    val type: JTypeReference,
+    val initializer: JInitializerBlock,
 )
 
-data class Variable(
+data class JVariable(
     val name: String,
-    val type: TypeReference,
-    val initializer: InitializerBlock,
+    val type: JTypeReference,
+    val initializer: JInitializerBlock,
 )
 
-sealed interface InitializerBlock {
-    data object Empty : InitializerBlock
-    data class ExpressionBlock(
-        val expression: Expression
-    ) : InitializerBlock
+sealed interface JCodeBlock {
+
+    data object Empty : JCodeBlock
+
+    data class Expressions(
+        val expressions: List<JExpression>
+    ) : JCodeBlock
 }
 
-sealed interface Expression {
-    data object Empty : Expression
+sealed interface JInitializerBlock {
+    data object Empty : JInitializerBlock
+    data class ExpressionBlock(
+        val expression: JExpression
+    ) : JInitializerBlock
+}
+
+sealed interface JExpression {
+    data object Empty : JExpression
 
     // Return
     data class Return(
-        val expression: Expression
-    ) : Expression
+        val expression: JExpression
+    ) : JExpression
 
     // Conditions
     data class If(
-        val condition: Expression,
-        val thenExpression: Expression,
-        val elseExpression: Expression
-    ) : Expression
+        val condition: JExpression,
+        val thenExpression: JExpression,
+        val elseExpression: JExpression
+    ) : JExpression
 
     // Loops
     data class ForLoop(
-        val initializers: List<Expression>,
-        val condition: Expression,
-        val updates: List<Expression>,
-        val body: Expression
-    ) : Expression
+        val initializers: List<JExpression>,
+        val condition: JExpression,
+        val updates: List<JExpression>,
+        val body: JExpression
+    ) : JExpression
 
     data class ForEachLoop(
         val variable: DeclareVariable,
-        val iterable: Expression,
-        val body: Expression
-    ) : Expression
+        val iterable: JExpression,
+        val body: JExpression
+    ) : JExpression
 
     // Literals
-    sealed interface Literal : Expression
+    sealed interface Literal : JExpression
     data class BooleanLiteral(val value: Boolean) : Literal
     data class ByteLiteral(val value: Byte) : Literal
     data class CharLiteral(val value: Char) : Literal
@@ -103,76 +112,67 @@ sealed interface Expression {
 
     // Assignment
     data class Assignment(
-        val variable: Expression,
-        val expression: Expression
-    ) : Expression
+        val variable: JExpression,
+        val expression: JExpression
+    ) : JExpression
 
     // Expressions
     data class Expressions(
-        val expressions: List<Expression>
-    ) : Expression
+        val expressions: List<JExpression>
+    ) : JExpression
 
     data class BinaryExpression(
         val operator: Operator,
-        val lhs: Expression,
-        val rhs: Expression
-    ) : Expression
+        val lhs: JExpression,
+        val rhs: JExpression
+    ) : JExpression
 
     // Methods
     data class MethodInvocation(
-        val arguments: List<Expression>,
-        val method: Expression
-    ) : Expression
+        val arguments: List<JExpression>,
+        val method: JExpression
+    ) : JExpression
 
     // Field access
     data class FieldAccess(
         val name: String,
-        val expression: Expression
-    ) : Expression
+        val expression: JExpression
+    ) : JExpression
 
     // Identifiers
     data class Identifier(
         val name: String
-    ) : Expression
+    ) : JExpression
 
     data class TypedIdentifier(
-        val identifier: TypeReference,
-        val types: List<TypeReference>
-    ) : Expression
+        val identifier: JTypeReference,
+        val types: List<JTypeReference>
+    ) : JExpression
 
     // Constructor
     data class ConstructorInvocation(
-        val identifier: Expression,
-        val arguments: List<Expression>,
-    ) : Expression
+        val identifier: JExpression,
+        val arguments: List<JExpression>,
+    ) : JExpression
 
     // Variables
     data class DeclareVariable(
         val name: String,
-        val type: TypeReference,
-        val initializer: InitializerBlock
-    ) : Expression
+        val type: JTypeReference,
+        val initializer: JInitializerBlock
+    ) : JExpression
 }
 
-sealed interface CodeBlock {
-
-    data object Empty : CodeBlock
-
-    data class Expressions(
-        val expressions: List<Expression>
-    ) : CodeBlock
-}
-
-data class Parameter(
+data class JParameter(
     val name: String,
-    val type: TypeReference,
+    val type: JTypeReference,
     val isVarArgs: Boolean,
 )
 
-data class TypeReference(
+data class JTypeReference(
     val name: String,
     val kind: TypeReferenceKind,
-    val typeArguments: List<TypeReference> = emptyList()
+    val typeArguments: List<JTypeReference> = emptyList()
 )
 
 enum class TypeReferenceKind {

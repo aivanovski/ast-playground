@@ -14,7 +14,7 @@ import com.github.ai.astplayground.astDsl.TypeReferenceFactory.parameterizedWith
 import com.github.ai.astplayground.astDsl.TypeReferenceFactory.void
 import com.github.ai.astplayground.astDsl.VariableFactory.asIntVariable
 import com.github.ai.astplayground.parseAndAssert
-import com.github.ai.astplayground.transpiler.parser.model.Expression
+import com.github.ai.astplayground.transpiler.parser.model.JExpression
 import com.github.ai.astplayground.transpiler.parser.model.Operator
 import org.junit.jupiter.api.Test
 
@@ -36,25 +36,25 @@ class ForLoopTest {
                 `class`("Test") {
                     method("m0", returns = void()) {
                         call(
-                            Expression.ForLoop(
+                            JExpression.ForLoop(
                                 initializers = listOf(
-                                    Expression.DeclareVariable(
+                                    JExpression.DeclareVariable(
                                         name = "i",
                                         type = TypeReferenceFactory.int(),
                                         initializer = intValue(0)
                                     )
                                 ),
-                                condition = Expression.BinaryExpression(
+                                condition = JExpression.BinaryExpression(
                                     operator = Operator.LESS_THAN,
-                                    lhs = Expression.Identifier("i"),
+                                    lhs = JExpression.Identifier("i"),
                                     rhs = int(10)
                                 ),
                                 updates = listOf(
-                                    Expression.Assignment(
-                                        variable = Expression.Identifier("i"),
-                                        expression = Expression.BinaryExpression(
+                                    JExpression.Assignment(
+                                        variable = JExpression.Identifier("i"),
+                                        expression = JExpression.BinaryExpression(
                                             operator = Operator.PLUS,
-                                            lhs = Expression.Identifier("i"),
+                                            lhs = JExpression.Identifier("i"),
                                             rhs = int(1)
                                         )
                                     )

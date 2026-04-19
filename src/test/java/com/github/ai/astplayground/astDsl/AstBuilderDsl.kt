@@ -1,19 +1,19 @@
 package com.github.ai.astplayground.astDsl
 
 import com.github.ai.astplayground.astDsl.ExpressionFactory.literal
-import com.github.ai.astplayground.transpiler.parser.model.CodeBlock
-import com.github.ai.astplayground.transpiler.parser.model.Constructor
-import com.github.ai.astplayground.transpiler.parser.model.Expression
-import com.github.ai.astplayground.transpiler.parser.model.Field
-import com.github.ai.astplayground.transpiler.parser.model.InitializerBlock
+import com.github.ai.astplayground.transpiler.parser.model.JCodeBlock
+import com.github.ai.astplayground.transpiler.parser.model.JConstructor
+import com.github.ai.astplayground.transpiler.parser.model.JExpression
+import com.github.ai.astplayground.transpiler.parser.model.JField
+import com.github.ai.astplayground.transpiler.parser.model.JInitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode
 import com.github.ai.astplayground.transpiler.parser.model.JavaAstNode.TypeDeclaration
-import com.github.ai.astplayground.transpiler.parser.model.Method
+import com.github.ai.astplayground.transpiler.parser.model.JMethod
 import com.github.ai.astplayground.transpiler.parser.model.Modifier
-import com.github.ai.astplayground.transpiler.parser.model.Parameter
-import com.github.ai.astplayground.transpiler.parser.model.TypeReference
+import com.github.ai.astplayground.transpiler.parser.model.JParameter
+import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
 import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
-import com.github.ai.astplayground.transpiler.parser.model.Variable
+import com.github.ai.astplayground.transpiler.parser.model.JVariable
 
 internal object AstBuilderDsl {
     fun javaAst(content: AstBuilder.() -> Unit): List<JavaAstNode> {
@@ -67,13 +67,13 @@ class AstBuilder(
 class TypeBuilder(
     private val name: String,
     private val modifiers: Set<Modifier>,
-    private val fields: MutableList<Field> = mutableListOf(),
-    private val constructors: MutableList<Constructor> = mutableListOf(),
-    private val methods: MutableList<Method> = mutableListOf()
+    private val fields: MutableList<JField> = mutableListOf(),
+    private val constructors: MutableList<JConstructor> = mutableListOf(),
+    private val methods: MutableList<JMethod> = mutableListOf()
 ) {
 
     fun constructor(
-        vararg parameters: Parameter,
+        vararg parameters: JParameter,
         body: CodeBlockBuilder.() -> Unit = {}
     ) {
         val codeBlock = CodeBlockBuilder()
@@ -83,7 +83,7 @@ class TypeBuilder(
             .buildBlock()
 
         constructors.add(
-            Constructor(
+            JConstructor(
                 modifiers = modifiers,
                 parameters = parameters.toList(),
                 body = codeBlock
@@ -93,7 +93,7 @@ class TypeBuilder(
 
     fun void_method(
         name: String,
-        vararg parameters: Parameter,
+        vararg parameters: JParameter,
         modifiers: Set<Modifier> = emptySet(),
         body: CodeBlockBuilder.() -> Unit = {}
     ) = method(
@@ -106,8 +106,8 @@ class TypeBuilder(
 
     fun method(
         name: String,
-        vararg parameters: Parameter,
-        returns: TypeReference,
+        vararg parameters: JParameter,
+        returns: JTypeReference,
         modifiers: Set<Modifier> = emptySet(),
         body: CodeBlockBuilder.() -> Unit = {}
     ) {
@@ -118,7 +118,7 @@ class TypeBuilder(
             .buildBlock()
 
         methods.add(
-            Method(
+            JMethod(
                 name = name,
                 modifiers = modifiers,
                 returnType = returns,
@@ -129,13 +129,13 @@ class TypeBuilder(
     }
 
     fun field(
-        field: Field
+        field: JField
     ) {
         fields.add(field)
     }
 
     fun buildTypeNode(): TypeDeclaration {
-        return JavaAstNode.Class(
+        return JavaAstNode.JClass(
             name = name,
             modifiers = modifiers,
             fields = fields,
@@ -162,17 +162,17 @@ class TypeBuilder(
 //}
 
 class CodeBlockBuilder(
-    val expressions: MutableList<Expression> = mutableListOf()
+    val expressions: MutableList<JExpression> = mutableListOf()
 ) {
 
     fun foreach(
-        variable: Variable,
-        iterable: Expression,
+        variable: JVariable,
+        iterable: JExpression,
         block: CodeBlockBuilder.() -> Unit = {}
     ) {
         expressions.add(
-            Expression.ForEachLoop(
-                variable = Expression.DeclareVariable(
+            JExpression.ForEachLoop(
+                variable = JExpression.DeclareVariable(
                     name = variable.name,
                     type = variable.type,
                     initializer = variable.initializer
@@ -187,9 +187,9 @@ class CodeBlockBuilder(
         )
     }
 
-    fun variable(name: String, type: TypeReference, initializer: InitializerBlock) {
+    fun variable(name: String, type: JTypeReference, initializer: JInitializerBlock) {
         expressions.add(
-            Expression.DeclareVariable(
+            JExpression.DeclareVariable(
                 name = name,
                 type = type,
                 initializer = initializer
@@ -197,88 +197,88 @@ class CodeBlockBuilder(
         )
     }
 
-    fun assign(variable: Expression, expression: String) {
+    fun assign(variable: JExpression, expression: String) {
         expressions.add(
-            Expression.Assignment(
+            JExpression.Assignment(
                 variable = variable,
                 expression = ExpressionFactory.identifier(expression)
             )
         )
     }
 
-    fun assign(variable: Expression, expression: Expression) {
+    fun assign(variable: JExpression, expression: JExpression) {
         expressions.add(
-            Expression.Assignment(
+            JExpression.Assignment(
                 variable = variable,
                 expression = expression
             )
         )
     }
 
-    fun assign(vararg fields: String, expression: Expression) {
+    fun assign(vararg fields: String, expression: JExpression) {
         val identifier = ExpressionFactory.identifier(*fields)
 
         expressions.add(
-            Expression.Assignment(
+            JExpression.Assignment(
                 variable = identifier,
                 expression = expression
             )
         )
     }
 
-    fun `return`(expression: Expression) {
-        expressions.add(Expression.Return(expression))
+    fun `return`(expression: JExpression) {
+        expressions.add(JExpression.Return(expression))
     }
 
     fun `if`(
-        condition: Expression,
+        condition: JExpression,
         block: CodeBlockBuilder.() -> Unit = {}
     ) {
         expressions.add(
-            Expression.If(
+            JExpression.If(
                 condition = condition,
                 thenExpression = CodeBlockBuilder()
                     .apply {
                         block.invoke(this)
                     }
                     .buildExpression(),
-                elseExpression = Expression.Empty
+                elseExpression = JExpression.Empty
             )
         )
     }
 
-    fun call(expression: Expression) {
+    fun call(expression: JExpression) {
         expressions.add(expression)
     }
 
-    fun buildBlock(): CodeBlock {
+    fun buildBlock(): JCodeBlock {
         return if (expressions.isNotEmpty()) {
-            CodeBlock.Expressions(
+            JCodeBlock.Expressions(
                 expressions = expressions
             )
         } else {
-            CodeBlock.Empty
+            JCodeBlock.Empty
         }
     }
 
-    fun buildExpression(): Expression {
+    fun buildExpression(): JExpression {
         return when {
-            expressions.size > 1 -> Expression.Expressions(expressions)
+            expressions.size > 1 -> JExpression.Expressions(expressions)
             expressions.size == 1 -> expressions.first()
-            else -> Expression.Empty
+            else -> JExpression.Empty
         }
     }
 }
 
 class MethodInvocationBuilder(
     private val blockBuilder: CodeBlockBuilder,
-    identifier: Expression.Identifier
+    identifier: JExpression.Identifier
 ) {
 
-    private var expression: Expression = identifier
+    private var expression: JExpression = identifier
 
     fun fieldAccess(name: String): MethodInvocationBuilder {
-        expression = Expression.FieldAccess(
+        expression = JExpression.FieldAccess(
             name = name,
             expression = expression
         )
@@ -288,12 +288,12 @@ class MethodInvocationBuilder(
 
     fun invoke(
         method: String,
-        vararg arguments: Expression
+        vararg arguments: JExpression
     ) {
         blockBuilder.expressions.add(
-            Expression.MethodInvocation(
+            JExpression.MethodInvocation(
                 arguments = arguments.toList(),
-                method = Expression.FieldAccess(
+                method = JExpression.FieldAccess(
                     name = method,
                     expression = expression
                 )
@@ -306,9 +306,9 @@ object FieldFactory {
 
     fun variable(
         name: String,
-        type: TypeReference,
-        initializer: InitializerBlock = InitializerBlock.Empty
-    ) = Field(
+        type: JTypeReference,
+        initializer: JInitializerBlock = JInitializerBlock.Empty
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = type,
@@ -318,226 +318,226 @@ object FieldFactory {
     fun string(
         name: String,
         value: String? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = NonPrimitiveTypes.STRING,
         initializer = value?.let { InitializerFactory.stringValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 
     fun boolean(
         name: String,
         value: Boolean? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.BOOLEAN,
         initializer = value?.let { InitializerFactory.booleanValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 
     fun byte(
         name: String,
         value: Byte? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.BYTE,
         initializer = value?.let { InitializerFactory.byteValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 
     fun char(
         name: String,
         value: Char? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.CHAR,
         initializer = value?.let { InitializerFactory.charValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 
-    fun short(name: String) = Field(
+    fun short(name: String) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.SHORT,
-        initializer = InitializerBlock.Empty
+        initializer = JInitializerBlock.Empty
     )
 
     fun int(
         name: String,
         value: Int? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.INT,
         initializer = value?.let { InitializerFactory.intValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 
     fun long(
         name: String,
         value: Long? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.LONG,
         initializer = value?.let { InitializerFactory.longValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 
     fun float(
         name: String,
         value: Float? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.FLOAT,
         initializer = value?.let { InitializerFactory.floatValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 
     fun double(
         name: String,
         value: Double? = null
-    ) = Field(
+    ) = JField(
         name = name,
         modifiers = emptySet(),
         type = PrimitiveTypes.DOUBLE,
         initializer = value?.let { InitializerFactory.doubleValue(it) }
-            ?: InitializerBlock.Empty
+            ?: JInitializerBlock.Empty
     )
 }
 
 object InitializerFactory {
 
-    fun String.iliteral() = InitializerBlock.ExpressionBlock(
+    fun String.iliteral() = JInitializerBlock.ExpressionBlock(
         expression = this.literal()
     )
 
-    fun Int.iliteral() = InitializerBlock.ExpressionBlock(
+    fun Int.iliteral() = JInitializerBlock.ExpressionBlock(
         expression = this.literal()
     )
 
-    fun initializer(producer: () -> Expression) = InitializerBlock.ExpressionBlock(
+    fun initializer(producer: () -> JExpression) = JInitializerBlock.ExpressionBlock(
         expression = producer.invoke()
     )
 
     fun constructor(
-        identifier: Expression,
-        arguments: List<Expression> = emptyList()
-    ) = InitializerBlock.ExpressionBlock(
-        expression = Expression.ConstructorInvocation(
+        identifier: JExpression,
+        arguments: List<JExpression> = emptyList()
+    ) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.ConstructorInvocation(
             identifier = identifier,
             arguments = arguments
         )
     )
 
-    fun expression(expression: Expression) = InitializerBlock.ExpressionBlock(
+    fun expression(expression: JExpression) = JInitializerBlock.ExpressionBlock(
         expression = expression
     )
 
-    fun stringValue(value: String) = InitializerBlock.ExpressionBlock(
-        expression = Expression.StringLiteral(value)
+    fun stringValue(value: String) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.StringLiteral(value)
     )
 
-    fun booleanValue(value: Boolean) = InitializerBlock.ExpressionBlock(
-        expression = Expression.BooleanLiteral(value)
+    fun booleanValue(value: Boolean) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.BooleanLiteral(value)
     )
 
-    fun byteValue(value: Byte) = InitializerBlock.ExpressionBlock(
-        expression = Expression.ByteLiteral(value)
+    fun byteValue(value: Byte) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.ByteLiteral(value)
     )
 
-    fun charValue(value: Char) = InitializerBlock.ExpressionBlock(
-        expression = Expression.CharLiteral(value)
+    fun charValue(value: Char) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.CharLiteral(value)
     )
 
-    fun intValue(value: Int) = InitializerBlock.ExpressionBlock(
-        expression = Expression.IntLiteral(value)
+    fun intValue(value: Int) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.IntLiteral(value)
     )
 
-    fun longValue(value: Long) = InitializerBlock.ExpressionBlock(
-        expression = Expression.LongLiteral(value)
+    fun longValue(value: Long) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.LongLiteral(value)
     )
 
-    fun floatValue(value: Float) = InitializerBlock.ExpressionBlock(
-        expression = Expression.FloatLiteral(value)
+    fun floatValue(value: Float) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.FloatLiteral(value)
     )
 
-    fun doubleValue(value: Double) = InitializerBlock.ExpressionBlock(
-        expression = Expression.DoubleLiteral(value)
+    fun doubleValue(value: Double) = JInitializerBlock.ExpressionBlock(
+        expression = JExpression.DoubleLiteral(value)
     )
 }
 
 object ParametersFactory {
 
-    fun string(name: String) = Parameter(
+    fun string(name: String) = JParameter(
         name = name,
         type = NonPrimitiveTypes.STRING,
         isVarArgs = false
     )
 
-    fun variable(name: String, type: TypeReference) =
-        Parameter(
+    fun variable(name: String, type: JTypeReference) =
+        JParameter(
             name = name,
             type = type,
             isVarArgs = false
         )
 
     fun boolean(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.BOOLEAN,
             isVarArgs = false
         )
 
     fun byte(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.BYTE,
             isVarArgs = false
         )
 
     fun char(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.CHAR,
             isVarArgs = false
         )
 
     fun short(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.SHORT,
             isVarArgs = false
         )
 
     fun int(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.INT,
             isVarArgs = false
         )
 
     fun long(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.LONG,
             isVarArgs = false
         )
 
     fun float(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.FLOAT,
             isVarArgs = false
         )
 
     fun double(name: String) =
-        Parameter(
+        JParameter(
             name = name,
             type = PrimitiveTypes.DOUBLE,
             isVarArgs = false
@@ -546,49 +546,49 @@ object ParametersFactory {
 
 object PrimitiveTypes {
 
-    val BOOLEAN = TypeReference(
+    val BOOLEAN = JTypeReference(
         name = "boolean",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
     )
 
-    val BYTE = TypeReference(
+    val BYTE = JTypeReference(
         name = "byte",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
     )
 
-    val CHAR = TypeReference(
+    val CHAR = JTypeReference(
         name = "char",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
     )
 
-    val SHORT = TypeReference(
+    val SHORT = JTypeReference(
         name = "short",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
     )
 
-    val INT = TypeReference(
+    val INT = JTypeReference(
         name = "int",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
     )
 
-    val LONG = TypeReference(
+    val LONG = JTypeReference(
         name = "long",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
     )
 
-    val FLOAT = TypeReference(
+    val FLOAT = JTypeReference(
         name = "float",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
     )
 
-    val DOUBLE = TypeReference(
+    val DOUBLE = JTypeReference(
         name = "double",
         kind = TypeReferenceKind.PRIMITIVE,
         typeArguments = emptyList()
@@ -596,13 +596,13 @@ object PrimitiveTypes {
 }
 
 object NonPrimitiveTypes {
-    val VOID = TypeReference(
+    val VOID = JTypeReference(
         name = "void",
         kind = TypeReferenceKind.VOID,
         typeArguments = emptyList()
     )
 
-    val STRING = TypeReference(
+    val STRING = JTypeReference(
         name = "String",
         kind = TypeReferenceKind.DECLARED,
         typeArguments = emptyList()
@@ -611,27 +611,27 @@ object NonPrimitiveTypes {
 
 object VariableFactory {
 
-    fun String.asVariableOf(type: TypeReference) = Variable(
+    fun String.asVariableOf(type: JTypeReference) = JVariable(
         name = this,
         type = type,
-        initializer = InitializerBlock.Empty
+        initializer = JInitializerBlock.Empty
     )
 
-    fun String.asVariableOf(typeName: String) = Variable(
+    fun String.asVariableOf(typeName: String) = JVariable(
         name = this,
-        type = TypeReference(
+        type = JTypeReference(
             name = typeName,
             kind = TypeReferenceKind.DECLARED
         ),
-        initializer = InitializerBlock.Empty
+        initializer = JInitializerBlock.Empty
     )
 
     fun String.asIntVariable() = intVariable(name = this)
 
     fun intVariable(
         name: String,
-        initializer: InitializerBlock = InitializerBlock.Empty
-    ) = Variable(
+        initializer: JInitializerBlock = JInitializerBlock.Empty
+    ) = JVariable(
         name = name,
         type = PrimitiveTypes.INT,
         initializer = initializer

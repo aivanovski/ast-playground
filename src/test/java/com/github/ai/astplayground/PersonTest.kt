@@ -5,10 +5,52 @@ import org.junit.jupiter.api.Test
 class PersonTest {
 
 //    @Test
-//    fun `should work with class`() {
+//    fun `should work with simple example`() {
 //        transpileJavaAndAssert(
 //            input = """
-//                package test;
+//                import java.util.List;
+//
+//                public class Test {
+//                    String findLongest(List<String> values) {
+//                        if (values.isEmpty()) return null;
+//
+//                        String result = null;
+//                        for (String value : values) {
+//                            if (value.length() > result.length()) {
+//                                result = result;
+//                            }
+//                        }
+//
+//                        return result;
+//                    }
+//                }
+//            """,
+//            expected = """
+//                import java.util.List
+//
+//                class JavaTest2 {
+//                    fun findLongest(values: List<String?>?): String? {
+//                        if (values!!.isEmpty()) return null
+//
+//                        var result: String? = null
+//                        for (value in values!!) {
+//                            if (value!!.length > result!!.length) {
+//                                result = value
+//                            }
+//                        }
+//
+//                        return result
+//                    }
+//                }
+//            """
+//        )
+//    }
+
+    //    @Test
+    //    fun `should work with class`() {
+    //        transpileJavaAndAssert(
+    //            input = """
+    //                package test;
 //                import java.util.List;
 //                class Main {
 //                    static Person findOldestPerson(List<Person> people) {
