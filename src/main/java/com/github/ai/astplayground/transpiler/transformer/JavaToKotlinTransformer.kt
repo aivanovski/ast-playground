@@ -18,62 +18,46 @@ import com.github.ai.astplayground.transpiler.transformer.model.KExpression
 import com.github.ai.astplayground.transpiler.transformer.model.KParameter
 import com.github.ai.astplayground.transpiler.transformer.model.KTypeReference
 import com.github.ai.astplayground.transpiler.transformer.model.KotlinAstNode
-import java.util.LinkedList
 
 class JavaToKotlinTransformer {
 
     fun transform(javaAst: List<JavaAstNode>): List<KotlinAstNode> {
         val kotlinAst = javaAst.map { node -> transformNode(node) }
-        val irRoots = convertAstToIR(kotlinAst)
-        return kotlinAst
-    }
 
-    private fun convertAstToIR(ast: List<KotlinAstNode>): List<IRNode> {
-        val stack = LinkedList<Pair<IRNode?, KotlinAstNode>>()
-            .apply {
-                for (node in ast) {
-                    add(null to node)
+        val irRoots = kotlinAst.toIRNodes()
+            .map { rootNode ->
+                rootNode.traverseAndTransform { node ->
+                    if (node.astNode is KotlinAstNode.KExpressionNode
+                        && node.astNode.expression is KExpression.If
+                    ) {
+
+                        println("!!!!!!!!!!!!!!!!!!!! transform ---!!!!!!!!!")
+
+                        node.astNode
+                    } else {
+                        node.astNode
+                    }
                 }
             }
 
-        val roots = mutableListOf<IRNode>()
-        while (stack.isNotEmpty()) {
-            val (parent, node) = stack.removeFirst()
-
-            val irNode = IRNode(
-                parent = parent,
-                node = node,
-                nodes = mutableListOf()
-            )
-
-            parent?.nodes?.add(irNode)
-
-            for (childNode in node.nodes) {
-                stack.push(irNode to childNode)
-            }
-
-            if (parent == null) {
-                roots.add(irNode)
-            }
-        }
-
-        return roots
+        return kotlinAst
     }
 
-    private fun KotlinAstNode.toIRNode(parent: IRNode?): IRNode {
-        val irNode = IRNode(
-            parent = parent,
-            node = this,
-            nodes = mutableListOf()
-        )
 
-        for (node in nodes) {
-            val irChildNode = node.toIRNode(parent = irNode)
-            irNode.nodes.add(irChildNode)
-        }
-
-        return irNode
-    }
+//    private fun KotlinAstNode.toIRNode(parent: IRNode?): IRNode {
+//        val irNode = IRNode(
+//            parent = parent,
+//            node = this,
+//            nodes = mutableListOf()
+//        )
+//
+//        for (node in nodes) {
+//            val irChildNode = node.toIRNode(parent = irNode)
+//            irNode.nodes.add(irChildNode)
+//        }
+//
+//        return irNode
+//    }
 
     private fun transformNode(node: JavaAstNode): KotlinAstNode {
         return when (node) {
