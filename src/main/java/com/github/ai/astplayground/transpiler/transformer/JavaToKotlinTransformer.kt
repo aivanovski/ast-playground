@@ -14,24 +14,56 @@ import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocati
 import com.github.ai.astplayground.transpiler.parser.model.isLiteral
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitive
 import com.github.ai.astplayground.transpiler.parser.model.isStatic
-import com.github.ai.astplayground.transpiler.transformer.model.KCodeBlock
 import com.github.ai.astplayground.transpiler.transformer.model.KExpression
 import com.github.ai.astplayground.transpiler.transformer.model.KParameter
 import com.github.ai.astplayground.transpiler.transformer.model.KTypeReference
 import com.github.ai.astplayground.transpiler.transformer.model.KotlinAstNode
+import java.util.LinkedList
 
 class JavaToKotlinTransformer {
 
     fun transform(javaAst: List<JavaAstNode>): List<KotlinAstNode> {
         val kotlinAst = javaAst.map { node -> transformNode(node) }
+        val irRoots = convertAstToIR(kotlinAst)
         return kotlinAst
+    }
+
+    private fun convertAstToIR(ast: List<KotlinAstNode>): List<IRNode> {
+        val stack = LinkedList<Pair<IRNode?, KotlinAstNode>>()
+            .apply {
+                for (node in ast) {
+                    add(null to node)
+                }
+            }
+
+        val roots = mutableListOf<IRNode>()
+        while (stack.isNotEmpty()) {
+            val (parent, node) = stack.removeFirst()
+
+            val irNode = IRNode(
+                parent = parent,
+                node = node,
+                nodes = mutableListOf()
+            )
+
+            parent?.nodes?.add(irNode)
+
+            for (childNode in node.nodes) {
+                stack.push(irNode to childNode)
+            }
+
+            if (parent == null) {
+                roots.add(irNode)
+            }
+        }
+
+        return roots
     }
 
     private fun KotlinAstNode.toIRNode(parent: IRNode?): IRNode {
         val irNode = IRNode(
             parent = parent,
             node = this,
-            resolvedType = null,
             nodes = mutableListOf()
         )
 
@@ -125,11 +157,14 @@ class JavaToKotlinTransformer {
         )
     }
 
-    private fun transformCodeBlock(block: JCodeBlock): KCodeBlock {
+    private fun transformCodeBlock(block: JCodeBlock): KotlinAstNode.KCodeBlock {
         return when (block) {
-            JCodeBlock.Empty -> KCodeBlock.Empty
-            is JCodeBlock.Expressions -> KCodeBlock.Expressions(
-                expressions = block.expressions.map { expression -> transformExpression(expression) }
+            JCodeBlock.Empty -> KotlinAstNode.EmptyCodeBlock
+            is JCodeBlock.Expressions -> KotlinAstNode.ExpressionsBlock(
+                expressions = block.expressions
+                    .map { expression ->
+                        transformExpression(expression).toAstNode()
+                    }
             )
         }
     }
@@ -143,13 +178,11 @@ class JavaToKotlinTransformer {
         )
     }
 
-    private fun transformInitializerBlock(block: JInitializerBlock): KCodeBlock {
+    private fun transformInitializerBlock(block: JInitializerBlock): KotlinAstNode.KCodeBlock {
         return when (block) {
-            JInitializerBlock.Empty -> KCodeBlock.Empty
-            is JInitializerBlock.ExpressionBlock -> KCodeBlock.Expressions(
-                expressions = listOf(
-                    transformExpression(block.expression)
-                )
+            JInitializerBlock.Empty -> KotlinAstNode.EmptyCodeBlock
+            is JInitializerBlock.ExpressionBlock -> KotlinAstNode.ExpressionsBlock(
+                expressions = listOf(transformExpression(block.expression).toAstNode())
             )
         }
     }
@@ -158,18 +191,21 @@ class JavaToKotlinTransformer {
         return expressions.map { expression -> transformExpression(expression) }
     }
 
+    private fun KExpression.toAstNode(): KotlinAstNode.KExpressionNode {
+        return KotlinAstNode.KExpressionNode(expression = this)
+    }
+
     private fun transformExpression(expression: JExpression): KExpression {
         return when (expression) {
             JExpression.Empty -> KExpression.Empty
-            is JExpression.Identifier -> KExpression.Identifier(expression.name)
-            is JExpression.Literal -> transformLiteral(expression)
-            is JExpression.Return -> KExpression.Return(transformExpression(expression.expression))
-            is JExpression.If -> KExpression.If(
-                condition = transformExpression(expression.condition),
-                thenExpression = transformExpression(expression.thenExpression),
-                elseExpression = transformExpression(expression.elseExpression)
+            is JExpression.Identifier -> KExpression.Identifier(
+                expression.name,
+                isUnsafeCall = false
             )
 
+            is JExpression.Literal -> transformLiteral(expression)
+            is JExpression.Return -> KExpression.Return(transformExpression(expression.expression))
+            is JExpression.If -> transformIfExpression(expression)
             is JExpression.ForEachLoop -> KExpression.ForEachLoop(
                 variable = KExpression.DeclareVariable(
                     name = expression.variable.name,
@@ -201,6 +237,14 @@ class JavaToKotlinTransformer {
             // TODO: implement other cases
             else -> throw NotImplementedError("Not implemented for expression: $expression")
         }
+    }
+
+    private fun transformIfExpression(expression: JExpression.If): KExpression.If {
+        return KExpression.If(
+            condition = transformExpression(expression.condition),
+            thenExpression = transformExpression(expression.thenExpression),
+            elseExpression = transformExpression(expression.elseExpression)
+        )
     }
 
     private fun transformLiteral(literal: JExpression.Literal): KExpression.Literal {

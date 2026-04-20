@@ -1,8 +1,5 @@
 package com.github.ai.astplayground.transpiler.transformer.model
 
-import com.github.ai.astplayground.transpiler.parser.model.JExpression
-import com.github.ai.astplayground.transpiler.parser.model.JInitializerBlock
-import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
 import com.github.ai.astplayground.transpiler.parser.model.Modifier
 import com.github.ai.astplayground.transpiler.parser.model.Operator
 
@@ -41,7 +38,7 @@ sealed class KotlinAstNode(
         val modifiers: Set<Modifier>,
         val type: KTypeReference,
         val initializer: KCodeBlock,
-    ) : KotlinAstNode(nodes = emptyList())
+    ) : KotlinAstNode(nodes = listOf(initializer))
 
     data class KMethod(
         val name: String,
@@ -49,13 +46,29 @@ sealed class KotlinAstNode(
         val returnType: KTypeReference,
         val parameters: List<KParameter>,
         val body: KCodeBlock
-    ) : KotlinAstNode(nodes = emptyList())
+    ) : KotlinAstNode(nodes = listOf(body))
 
     data class KConstructor(
         val modifiers: Set<Modifier>,
         val parameters: List<KParameter>,
         val body: KCodeBlock
+    ) : KotlinAstNode(nodes = listOf(body))
+
+    // Wrapper for Expressions
+    data class KExpressionNode(
+        val expression: KExpression
     ) : KotlinAstNode(nodes = emptyList())
+
+    // Code blocks
+    sealed class KCodeBlock(
+        override val nodes: List<KExpressionNode>
+    ) : KotlinAstNode(nodes = nodes)
+
+    data object EmptyCodeBlock : KCodeBlock(nodes = emptyList())
+
+    data class ExpressionsBlock(
+        val expressions: List<KExpressionNode>
+    ) : KCodeBlock(nodes = expressions)
 }
 
 data class KTypeReference(
@@ -70,14 +83,14 @@ data class KParameter(
     val isVarArgs: Boolean,
 )
 
-sealed interface KCodeBlock {
-
-    data object Empty : KCodeBlock
-
-    data class Expressions(
-        val expressions: List<KExpression>
-    ) : KCodeBlock
-}
+//sealed interface KCodeBlock {
+//
+//    data object Empty : KCodeBlock
+//
+//    data class Expressions(
+//        val expressions: List<KExpression>
+//    ) : KCodeBlock
+//}
 
 sealed interface KExpression {
     data object Empty : KExpression
@@ -149,7 +162,8 @@ sealed interface KExpression {
 
     // Identifiers
     data class Identifier(
-        val name: String
+        val name: String,
+        val isUnsafeCall: Boolean
     ) : KExpression
 
     data class TypedIdentifier(
@@ -167,6 +181,6 @@ sealed interface KExpression {
     data class DeclareVariable(
         val name: String,
         val type: KTypeReference,
-        val initializer: KCodeBlock
+        val initializer: KotlinAstNode.KCodeBlock
     ) : KExpression
 }

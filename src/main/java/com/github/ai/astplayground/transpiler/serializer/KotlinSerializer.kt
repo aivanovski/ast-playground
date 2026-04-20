@@ -1,25 +1,11 @@
 package com.github.ai.astplayground.transpiler.serializer
 
-import com.github.ai.astplayground.transpiler.model.exception.AstSerializationException
 import com.github.ai.astplayground.transpiler.parser.model.JCodeBlock
-import com.github.ai.astplayground.transpiler.parser.model.JInitializerBlock
 import com.github.ai.astplayground.transpiler.parser.model.JMethod
 import com.github.ai.astplayground.transpiler.parser.model.Modifier
-import com.github.ai.astplayground.transpiler.parser.model.JParameter
 import com.github.ai.astplayground.transpiler.parser.model.JTypeReference
-import com.github.ai.astplayground.transpiler.parser.model.TypeReferenceKind
 import com.github.ai.astplayground.transpiler.parser.model.isPrimitive
-import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveBoolean
-import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveByte
-import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveChar
-import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveDouble
-import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveFloat
-import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveInt
-import com.github.ai.astplayground.transpiler.parser.model.isPrimitiveLong
 import com.github.ai.astplayground.transpiler.parser.model.Operator
-import com.github.ai.astplayground.transpiler.parser.model.isConstructorInvocation
-import com.github.ai.astplayground.transpiler.parser.model.isLiteral
-import com.github.ai.astplayground.transpiler.transformer.model.KCodeBlock
 import com.github.ai.astplayground.transpiler.transformer.model.KExpression
 import com.github.ai.astplayground.transpiler.transformer.model.KParameter
 import com.github.ai.astplayground.transpiler.transformer.model.KTypeReference
@@ -32,7 +18,6 @@ import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveFloat
 import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveInt
 import com.github.ai.astplayground.transpiler.transformer.model.isPrimitiveLong
 import com.github.ai.astplayground.transpiler.transformer.model.isUnit
-import org.checkerframework.checker.units.qual.m
 
 class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
@@ -139,15 +124,32 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
 
         append("constructor($parameters)")
 
-        when (constructor.body) {
-            KCodeBlock.Empty -> append(" {}")
-            is KCodeBlock.Expressions -> {
-                val expressions = constructor.body.expressions
+        serialize(constructor.body)
+//        when (constructor.body) {
+//            KCodeBlock.Empty -> append(" {}")
+//            is KCodeBlock.Expressions -> {
+//                val expressions = constructor.body.expressions
+//
+//                appendBlock {
+//                    for (expression in expressions) {
+//                        newLine()
+//                        append(formatExpression(expression))
+//                    }
+//                }
+//            }
+//        }
+    }
+
+    private fun SourceCodeBuilder.serialize(block: KotlinAstNode.KCodeBlock) {
+        when (block) {
+            KotlinAstNode.EmptyCodeBlock -> append(" {}")
+            is KotlinAstNode.ExpressionsBlock -> {
+                val expressions = block.expressions
 
                 appendBlock {
                     for (expression in expressions) {
                         newLine()
-                        append(formatExpression(expression))
+                        append(formatExpression(expression.expression))
                     }
                 }
             }
@@ -183,19 +185,20 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
         val declaration = "fun $name($parameters)$returnDeclaration"
         append(declaration)
 
-        when (method.body) {
-            KCodeBlock.Empty -> append(" {}")
-            is KCodeBlock.Expressions -> {
-                val expressions = method.body.expressions
-
-                appendBlock {
-                    for (expression in expressions) {
-                        newLine()
-                        append(formatExpression(expression))
-                    }
-                }
-            }
-        }
+        serialize(method.body)
+//        when (method.body) {
+//            KCodeBlock.Empty -> append(" {}")
+//            is KCodeBlock.Expressions -> {
+//                val expressions = method.body.expressions
+//
+//                appendBlock {
+//                    for (expression in expressions) {
+//                        newLine()
+//                        append(formatExpression(expression))
+//                    }
+//                }
+//            }
+//        }
     }
 
     private fun formatParameter(parameter: KParameter): String {
@@ -209,12 +212,12 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
     }
 
     private fun formatFieldValue(
-        initializer: KCodeBlock,
+        initializer: KotlinAstNode.KCodeBlock,
         type: KTypeReference
     ): String {
         return when (initializer) {
-            KCodeBlock.Empty -> getDefaultValue(type)
-            is KCodeBlock.Expressions -> formatExpressions(initializer.expressions)
+            KotlinAstNode.EmptyCodeBlock -> getDefaultValue(type)
+            is KotlinAstNode.ExpressionsBlock -> formatExpressions(initializer.expressions.map { it.expression })
         }
     }
 
@@ -260,7 +263,7 @@ class KotlinSerializer : AstSerializer<KotlinAstNode> {
     private fun formatExpression(expression: KExpression): String {
         return when (expression) {
             KExpression.Empty -> ""
-            is KExpression.Identifier -> "$expression.name"
+            is KExpression.Identifier -> expression.name
             is KExpression.TypedIdentifier -> {
 //                val type = formatTypeName(expression.identifier)
                 // TODO:
